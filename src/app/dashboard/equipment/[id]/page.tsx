@@ -1,3 +1,6 @@
+
+'use client';
+
 import { mockEquipmentItems } from '@/data/mock-data';
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -7,6 +10,7 @@ import { ArrowLeft, Download, Printer } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import QRCode from 'qrcode';
+import { useEffect, useState } from 'react';
 
 async function generateQRCode(text: string) {
     try {
@@ -23,20 +27,45 @@ async function generateQRCode(text: string) {
     }
 }
 
-export default async function EquipmentDetailPage({ params }: { params: { id: string } }) {
+export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  
   const item = mockEquipmentItems.find(i => i.id === params.id);
 
+  useEffect(() => {
+    if (item) {
+      // In a real app, you'd get the full URL from the request or environment variables.
+      const assetUrl = `${window.location.origin}/dashboard/equipment/${item.id}`;
+      generateQRCode(assetUrl).then(setQrCodeDataUrl);
+    }
+  }, [item]);
+
+
   if (!item) {
-    notFound();
+    // Render a loading state or return notFound() on the server-side pass
+    if (typeof window === 'undefined') {
+      return null; 
+    }
+    return notFound();
+  }
+  
+  const handleDownload = () => {
+    if (!qrCodeDataUrl) return;
+    const link = document.createElement('a');
+    link.href = qrCodeDataUrl;
+    link.download = `${item.id}_qrcode.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
   }
 
-  // In a real app, you'd get the full URL from the request or environment variables.
-  const assetUrl = `http://localhost:9002/dashboard/equipment/${item.id}`;
-  const qrCodeDataUrl = await generateQRCode(assetUrl);
-
   return (
-    <div className="flex flex-col gap-8">
-      <div>
+    <div className="flex flex-col gap-8 print:gap-4">
+       <div className="print:hidden">
         <Button variant="outline" asChild>
             <Link href="/dashboard/equipment">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -45,13 +74,13 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
         </Button>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3">
-        <div className="md:col-span-2 space-y-8">
-            <Card>
+      <div className="grid gap-8 md:grid-cols-3 print:grid-cols-1">
+        <div className="md:col-span-2 space-y-8 print:col-span-1">
+            <Card className="print:shadow-none print:border-none">
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
-                            <CardTitle className="text-2xl">{item.name}</CardTitle>
+                            <CardTitle className="text-2xl print:text-xl">{item.name}</CardTitle>
                             <CardDescription>{item.model}</CardDescription>
                         </div>
                         <StatusBadge status={item.status} />
@@ -87,11 +116,11 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
                 </CardContent>
             </Card>
         </div>
-        <div className="space-y-4">
-             <Card>
-                <CardHeader>
+        <div className="space-y-4 print:col-span-1 print:flex print:flex-col print:items-center">
+             <Card className="print:shadow-none print:border-none">
+                <CardHeader className="print:text-center">
                     <CardTitle>QR Code</CardTitle>
-                    <CardDescription>Scan to view this asset's details.</CardDescription>
+                    <CardDescription className="print:hidden">Scan to view this asset's details.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-4">
                     {qrCodeDataUrl ? (
@@ -104,15 +133,15 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
                             />
                         </div>
                     ) : (
-                        <div className="p-4 text-destructive-foreground bg-destructive rounded-md text-sm">
+                        <div className="h-[234px] w-[234px] flex items-center justify-center p-4 text-destructive-foreground bg-destructive rounded-md text-sm">
                             Could not generate QR code.
                         </div>
                     )}
-                    <div className="flex gap-2 w-full">
-                         <Button variant="outline" className="w-full">
+                    <div className="flex gap-2 w-full print:hidden">
+                         <Button variant="outline" className="w-full" onClick={handleDownload} disabled={!qrCodeDataUrl}>
                             <Download className="mr-2 h-4 w-4" /> PNG
                         </Button>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full" onClick={handlePrint}>
                             <Printer className="mr-2 h-4 w-4" /> Print
                         </Button>
                     </div>
@@ -120,6 +149,25 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
             </Card>
         </div>
       </div>
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .printable-area, .printable-area * {
+            visibility: visible;
+          }
+          .printable-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          main {
+            padding: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
