@@ -1,3 +1,4 @@
+
 import mysql from 'mysql2/promise';
 
 let pool: mysql.Pool | null = null;
@@ -35,4 +36,12 @@ function getPool() {
 // A helper function to execute queries
 export async function query(sql: string, params: any[]) {
     const connectionPool = getPool();
-    
+    try {
+        const [rows] = await connectionPool.execute(sql, params);
+        return rows;
+    } catch (error) {
+        // Log the detailed error on the server and re-throw it
+        console.error("Database Query Error:", error);
+        throw error;
+    }
+}
