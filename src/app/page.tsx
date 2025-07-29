@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
-import { getDashboardStats, getRecentActivity } from "@/lib/actions";
-import { mockUser } from "@/data/mock-data";
+import { getDashboardStats, getRecentActivity, getUser } from "@/lib/actions";
 import { useEffect, useState } from "react";
-import type { EquipmentItem } from "@/lib/types";
+import type { EquipmentItem, User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -27,6 +26,7 @@ type DashboardStats = {
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0 });
   const [recentActivity, setRecentActivity] = useState<EquipmentItem[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,6 +43,9 @@ export default function DashboardPage() {
 
       const recentItems = await getRecentActivity();
       setRecentActivity(recentItems);
+
+      const currentUser = await getUser();
+      setUser(currentUser);
     }
     fetchData();
   }, [toast]);
@@ -61,7 +64,7 @@ export default function DashboardPage() {
       <Card className="bg-primary text-primary-foreground">
         <CardContent className="p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold">Welcome, {mockUser.name}!</h2>
+            <h2 className="text-2xl font-bold">Welcome, {user?.name ?? '...'}!</h2>
             <p className="opacity-80">
               Today is {new Date().toLocaleDateString('en-US', {
                 year: 'numeric',

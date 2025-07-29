@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
-import { mockEquipmentSets } from "@/data/mock-data";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { getEquipmentSets } from "@/lib/actions";
 
-export default function SetsPage() {
-  const sets = mockEquipmentSets;
+export default async function SetsPage() {
+  const sets = await getEquipmentSets();
 
   return (
     <div className="flex flex-col gap-8">
@@ -32,20 +32,32 @@ export default function SetsPage() {
             <CardContent className="space-y-4">
               <h4 className="text-sm font-medium">Items in this set:</h4>
               <Separator />
-              <ul className="space-y-3">
-                {set.items.map(item => (
-                  <li key={item.id} className="flex justify-between items-center text-sm">
-                    <Link href={`/dashboard/equipment/${item.id}`} className="hover:underline">
-                      {item.name}
-                    </Link>
-                    <StatusBadge status={item.status} />
-                  </li>
-                ))}
-              </ul>
+               {set.items.length > 0 ? (
+                <ul className="space-y-3">
+                  {set.items.map(item => (
+                    <li key={item.id} className="flex justify-between items-center text-sm">
+                      <Link href={`/dashboard/equipment/${item.id}`} className="hover:underline">
+                        {item.name}
+                      </Link>
+                      <StatusBadge status={item.status} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No items in this set.</p>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
+      {sets.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <h3 className="text-lg font-medium text-muted-foreground">No Equipment Sets Found</h3>
+            <p className="text-sm text-muted-foreground mt-2">Create a new set to get started.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { mockUser } from '@/data/mock-data';
 import {
   LayoutDashboard,
   HardDrive,
@@ -23,17 +22,20 @@ import {
   LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
+import { getUser } from '@/lib/actions';
 
 export const metadata: Metadata = {
   title: 'Asset Tracker',
   description: 'Manage your equipment with ease.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getUser();
+
   return (
     <html lang="en">
       <head>
@@ -94,12 +96,12 @@ export default function RootLayout({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={mockUser.avatar} alt={mockUser.name} />
-                      <AvatarFallback>{mockUser.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col text-sm truncate">
-                      <span className="font-semibold text-sidebar-foreground">{mockUser.name}</span>
-                      <span className="text-muted-foreground text-xs">{mockUser.email}</span>
+                      <span className="font-semibold text-sidebar-foreground">{user.name}</span>
+                      <span className="text-muted-foreground text-xs">{user.email}</span>
                     </div>
                   </div>
                   <Button asChild variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">

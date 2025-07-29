@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { query } from './db';
-import type { EquipmentItem } from './types';
+import type { EquipmentItem, EquipmentSet, User } from './types';
 
 // Schema for form validation
 const formSchema = z.object({
@@ -133,7 +133,7 @@ export async function deleteEquipment(id: string) {
     redirect('/dashboard/equipment');
 }
 
-// You can add similar functions for users and equipment_sets later
+
 export async function getDashboardStats() {
     try {
         const totalResult = await query("SELECT COUNT(*) as count FROM equipment_items", []) as any[];
@@ -150,7 +150,6 @@ export async function getDashboardStats() {
         };
     } catch (error: any) {
         console.error('Database Connection Error:', error.message);
-        // Return default values and an error message instead of throwing
         return {
             total: 0,
             usable: 0,
@@ -172,4 +171,38 @@ export async function getRecentActivity(): Promise<EquipmentItem[]> {
         console.error('Database Error getting recent activity:', error.message);
         return [];
     }
+}
+
+export async function getEquipmentSets(): Promise<EquipmentSet[]> {
+    try {
+        const sets = await query("SELECT * FROM equipment_sets", []) as any[];
+        const items = await query("SELECT * FROM equipment_items", []) as any[];
+
+        return sets.map(set => ({
+            ...set,
+            items: items.filter(item => item.setId === set.id)
+                         .map(item => ({...item, purchaseDate: new Date(item.purchaseDate).toISOString().split('T')[0]}))
+        }));
+    } catch (error: any) {
+        console.error('Database Error getting equipment sets:', error.message);
+        return [];
+    }
+}
+
+export async function getUser(): Promise<User> {
+    try {
+        // In a real app, you would fetch the logged-in user
+        const users = await query("SELECT * FROM users LIMIT 1", []) as any[];
+        if (users.length > 0) {
+            return users[0];
+        }
+    } catch (error: any) {
+        console.error('Database Error getting user:', error.message);
+    }
+    // Return a default user if no user is found or if there's an error
+    return {
+        name: 'Guest User',
+        email: 'guest@example.com',
+        avatar: 'https://placehold.co/100x100.png',
+    };
 }
