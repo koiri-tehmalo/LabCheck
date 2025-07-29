@@ -1,4 +1,3 @@
-import AiSummary from '@/components/dashboard/ai-summary';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 
@@ -17,13 +16,13 @@ export default function ReportsPage() {
                 <FileText className="h-6 w-6 text-primary" />
              </div>
              <div>
-                <CardTitle>AI Inspection Summary</CardTitle>
-                <CardDescription>Paste an inspection report to get a quick summary of key findings.</CardDescription>
+                <CardTitle>Standard Reports</CardTitle>
+                <CardDescription>View and export standard equipment reports.</CardDescription>
              </div>
           </div>
         </CardHeader>
         <CardContent>
-          <AiSummary />
+          <p className="text-muted-foreground">Feature coming soon. Standard reporting capabilities will be available here.</p>
         </CardContent>
       </Card>
     </div>
