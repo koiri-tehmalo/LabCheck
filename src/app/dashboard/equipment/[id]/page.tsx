@@ -6,13 +6,33 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Printer } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import QRCode from 'qrcode';
 
-export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
+async function generateQRCode(text: string) {
+    try {
+        const url = await QRCode.toDataURL(text, {
+            errorCorrectionLevel: 'H',
+            type: 'image/png',
+            quality: 0.9,
+            margin: 1,
+        });
+        return url;
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+}
+
+export default async function EquipmentDetailPage({ params }: { params: { id: string } }) {
   const item = mockEquipmentItems.find(i => i.id === params.id);
 
   if (!item) {
     notFound();
   }
+
+  // In a real app, you'd get the full URL from the request or environment variables.
+  const assetUrl = `http://localhost:9002/dashboard/equipment/${item.id}`;
+  const qrCodeDataUrl = await generateQRCode(assetUrl);
 
   return (
     <div className="flex flex-col gap-8">
@@ -74,15 +94,20 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
                     <CardDescription>Scan to view this asset's details.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-4">
-                    <div className="p-4 bg-white rounded-lg border">
-                        <Image 
-                            src="https://placehold.co/200x200.png" 
-                            alt={`QR code for ${item.name}`}
-                            width={200}
-                            height={200}
-                            data-ai-hint="qr code"
-                        />
-                    </div>
+                    {qrCodeDataUrl ? (
+                        <div className="p-4 bg-white rounded-lg border">
+                            <Image 
+                                src={qrCodeDataUrl}
+                                alt={`QR code for ${item.name}`}
+                                width={200}
+                                height={200}
+                            />
+                        </div>
+                    ) : (
+                        <div className="p-4 text-destructive-foreground bg-destructive rounded-md text-sm">
+                            Could not generate QR code.
+                        </div>
+                    )}
                     <div className="flex gap-2 w-full">
                          <Button variant="outline" className="w-full">
                             <Download className="mr-2 h-4 w-4" /> PNG
