@@ -13,7 +13,7 @@ export function LoginForm() {
     event.preventDefault();
     // In a real app, you'd handle authentication here.
     // For this demo, we'll just redirect to the dashboard.
-    router.push('/dashboard');
+    router.push('/');
   };
 
   return (
