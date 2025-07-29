@@ -29,12 +29,6 @@ type EquipmentTableProps = {
 export function EquipmentTable({ data }: EquipmentTableProps) {
   const router = useRouter();
 
-  const handleEdit = () => {
-    // For demo, we'll just redirect to login.
-    // In a real app, you would check for authentication status.
-    router.push('/login');
-  }
-
   return (
     <div className="rounded-lg border">
       <Table>
@@ -77,11 +71,15 @@ export function EquipmentTable({ data }: EquipmentTableProps) {
                         <QrCode className="mr-2 h-4 w-4" /> View Details & QR
                        </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEdit}>
-                      <Pencil className="mr-2 h-4 w-4" /> Edit
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/equipment/${item.id}/edit`} className="flex items-center">
+                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEdit} className="text-destructive focus:text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/equipment/${item.id}/delete`} className="flex items-center text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
 import { EquipmentTable } from "@/components/dashboard/equipment-table";
 import { mockEquipmentItems } from "@/data/mock-data";
+import Link from "next/link";
 
 export default function EquipmentPage() {
   // In a real app, data fetching would be done here
@@ -20,9 +21,11 @@ export default function EquipmentPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search equipment..." className="pl-10" />
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Equipment
+        <Button asChild>
+          <Link href="/dashboard/equipment/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Equipment
+          </Link>
         </Button>
       </div>
       
