@@ -35,7 +35,8 @@ import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentItem } from "@/lib/types"
-import { saveEquipment, updateEquipment } from "@/lib/actions"
+import { getSetOptions, saveEquipment, updateEquipment } from "@/lib/actions"
+import { useEffect, useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -61,6 +62,15 @@ interface EquipmentFormProps {
 export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [setOptions, setSetOptions] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchSetOptions() {
+      const options = await getSetOptions();
+      setSetOptions(options);
+    }
+    fetchSetOptions();
+  }, []);
   
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(formSchema),
@@ -217,10 +227,22 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
             name="setId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Equipment Set ID (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., SET-01" {...field} value={field.value || ''} />
-                </FormControl>
+                <FormLabel>Equipment Set (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a set" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="none">-- No Set --</SelectItem>
+                        {setOptions.map(option => (
+                            <SelectItem key={option.id} value={option.id}>
+                                {option.name} ({option.id})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

@@ -206,3 +206,13 @@ export async function getUser(): Promise<User> {
         avatar: 'https://placehold.co/100x100.png',
     };
 }
+
+export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
+    try {
+        const results = await query("SELECT id, name FROM equipment_sets ORDER BY name", []) as any[];
+        return results;
+    } catch (error: any) {
+        console.error('Database Error getting set options:', error.message);
+        return [];
+    }
+}
