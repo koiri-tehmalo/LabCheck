@@ -57,36 +57,36 @@ export default function RootLayout({
               <SidebarContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <Link href="/" legacyBehavior passHref>
-                      <SidebarMenuButton tooltip="Dashboard">
+                    <SidebarMenuButton asChild tooltip="Dashboard">
+                      <Link href="/">
                         <LayoutDashboard />
                         <span>Dashboard</span>
-                      </SidebarMenuButton>
-                    </Link>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/equipment" legacyBehavior passHref>
-                      <SidebarMenuButton tooltip="Equipment">
+                     <SidebarMenuButton asChild tooltip="Equipment">
+                       <Link href="/dashboard/equipment">
                         <HardDrive />
                         <span>Equipment</span>
-                      </SidebarMenuButton>
-                    </Link>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/sets" legacyBehavior passHref>
-                        <SidebarMenuButton tooltip="Sets">
+                     <SidebarMenuButton asChild tooltip="Sets">
+                       <Link href="/dashboard/sets">
                             <Component />
                             <span>Equipment Sets</span>
-                        </SidebarMenuButton>
-                    </Link>
+                        </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/reports" legacyBehavior passHref>
-                        <SidebarMenuButton tooltip="Reports">
+                    <SidebarMenuButton asChild tooltip="Reports">
+                       <Link href="/dashboard/reports">
                             <FileText />
                             <span>Reports</span>
-                        </SidebarMenuButton>
-                    </Link>
+                        </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarContent>
@@ -102,11 +102,11 @@ export default function RootLayout({
                       <span className="text-muted-foreground text-xs">{mockUser.email}</span>
                     </div>
                   </div>
-                  <Link href="/login">
-                    <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                  <Button asChild variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                    <Link href="/login">
                       <LogOut className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </SidebarFooter>
             </Sidebar>

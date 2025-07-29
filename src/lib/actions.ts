@@ -29,7 +29,8 @@ export async function getEquipmentItems(): Promise<EquipmentItem[]> {
         }));
     } catch (error) {
         console.error('Database Error:', error);
-        throw new Error('Failed to fetch equipment items.');
+        // Return empty array on error to prevent crash
+        return [];
     }
 }
 
@@ -145,10 +146,18 @@ export async function getDashboardStats() {
             usable: usableResult[0].count,
             broken: brokenResult[0].count,
             lost: lostResult[0].count,
+            error: null,
         };
     } catch (error) {
         console.error('Database Error:', error);
-        throw new Error('Failed to fetch dashboard stats.');
+        // Return default values and an error message instead of throwing
+        return {
+            total: 0,
+            usable: 0,
+            broken: 0,
+            lost: 0,
+            error: 'Failed to connect to the database. Please check your configuration.',
+        }
     }
 }
 
@@ -161,6 +170,7 @@ export async function getRecentActivity(): Promise<EquipmentItem[]> {
         }));
     } catch (error) {
         console.error('Database Error:', error);
-        throw new Error('Failed to fetch recent activity.');
+        // Return empty array on error to prevent crash
+        return [];
     }
 }

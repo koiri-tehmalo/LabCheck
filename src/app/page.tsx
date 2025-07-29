@@ -1,17 +1,53 @@
 
 
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardDrive, AlertTriangle, CheckCircle, HelpCircle, Plus, Camera, FileText, Component } from "lucide-react";
+import { HardDrive, AlertTriangle, CheckCircle, HelpCircle, Plus, Camera, FileText, Component, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { getDashboardStats, getRecentActivity } from "@/lib/actions";
 import { mockUser } from "@/data/mock-data";
+import { useEffect, useState } from "react";
+import type { EquipmentItem } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export default async function DashboardPage() {
-  const { total, usable, broken, lost } = await getDashboardStats();
-  const recentActivity = await getRecentActivity();
+
+type DashboardStats = {
+  total: number;
+  usable: number;
+  broken: number;
+  lost: number;
+  error?: string | null;
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0 });
+  const [recentActivity, setRecentActivity] = useState<EquipmentItem[]>([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchData() {
+      const dashboardStats = await getDashboardStats();
+      if (dashboardStats.error) {
+         toast({
+          variant: "destructive",
+          title: "Database Connection Error",
+          description: "Could not connect to the database. Please check console for details.",
+        });
+      }
+      setStats(dashboardStats);
+
+      const recentItems = await getRecentActivity();
+      setRecentActivity(recentItems);
+    }
+    fetchData();
+  }, [toast]);
+  
+  const { total, usable, broken, lost } = stats;
 
   const statsForChart = [
     { label: 'Usable', count: usable, color: 'bg-green-500' },
@@ -40,6 +76,16 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      
+      {stats.error && (
+         <Alert variant="destructive">
+          <ServerCrash className="h-4 w-4" />
+          <AlertTitle>Database Error</AlertTitle>
+          <AlertDescription>
+            {stats.error} Stats and recent activity may not be accurate.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Cards in a Table */}
       <Card>
@@ -141,18 +187,26 @@ export default async function DashboardPage() {
                            </tr>
                         </thead>
                         <tbody>
-                            {recentActivity.map(item => (
-                                <tr key={item.id} className="border-t">
-                                    <td className="py-2">
-                                        <Link href={`/dashboard/equipment/${item.id}`} className="font-medium hover:underline">
-                                            {item.name}
-                                        </Link>
-                                        <div className="text-xs text-muted-foreground">{item.id}</div>
+                            {recentActivity.length > 0 ? (
+                                recentActivity.map(item => (
+                                    <tr key={item.id} className="border-t">
+                                        <td className="py-2">
+                                            <Link href={`/dashboard/equipment/${item.id}`} className="font-medium hover:underline">
+                                                {item.name}
+                                            </Link>
+                                            <div className="text-xs text-muted-foreground">{item.id}</div>
+                                        </td>
+                                        <td className="py-2">{new Date(item.purchaseDate).toLocaleDateString()}</td>
+                                        <td className="py-2 text-right"><StatusBadge status={item.status} /></td>
+                                    </tr>
+                                ))
+                             ) : (
+                                <tr>
+                                    <td colSpan={3} className="py-4 text-center text-muted-foreground">
+                                        No recent activity or could not load data.
                                     </td>
-                                    <td className="py-2">{new Date(item.purchaseDate).toLocaleDateString()}</td>
-                                    <td className="py-2 text-right"><StatusBadge status={item.status} /></td>
                                 </tr>
-                            ))}
+                             )}
                         </tbody>
                     </table>
                 </div>
