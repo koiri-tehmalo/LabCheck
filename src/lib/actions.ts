@@ -27,8 +27,8 @@ export async function getEquipmentItems(): Promise<EquipmentItem[]> {
             ...item,
             purchaseDate: new Date(item.purchaseDate).toISOString().split('T')[0],
         }));
-    } catch (error) {
-        console.error('Database Error:', error);
+    } catch (error: any) {
+        console.error('Database Error getting equipment items:', error.message);
         // Return empty array on error to prevent crash
         return [];
     }
@@ -46,8 +46,8 @@ export async function getEquipmentItemById(id: string): Promise<EquipmentItem | 
             ...item,
             purchaseDate: new Date(item.purchaseDate).toISOString().split('T')[0],
         };
-    } catch (error) {
-        console.error('Database Error:', error);
+    } catch (error: any) {
+        console.error(`Database Error getting equipment by ID ${id}:`, error.message);
         // Don't throw, return null if not found or on error
         return null;
     }
@@ -79,8 +79,8 @@ export async function saveEquipment(formData: FormData) {
             'INSERT INTO equipment_items (id, name, model, status, location, purchaseDate, notes, setId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [newId, name, model, status, location, dateString, notes || null, setId || null]
         );
-    } catch (error) {
-        console.error('Database Error:', error);
+    } catch (error: any) {
+        console.error('Database Error saving equipment:', error.message);
         throw new Error('Failed to create equipment item.');
     }
 
@@ -112,8 +112,8 @@ export async function updateEquipment(id: string, formData: FormData) {
             'UPDATE equipment_items SET name = ?, model = ?, status = ?, location = ?, purchaseDate = ?, notes = ?, setId = ? WHERE id = ?',
             [name, model, status, location, dateString, notes || null, setId || null, id]
         );
-    } catch (error) {
-        console.error('Database Error:', error);
+    } catch (error: any) {
+        console.error('Database Error updating equipment:', error.message);
         throw new Error('Failed to update equipment item.');
     }
 
@@ -125,8 +125,8 @@ export async function updateEquipment(id: string, formData: FormData) {
 export async function deleteEquipment(id: string) {
     try {
         await query('DELETE FROM equipment_items WHERE id = ?', [id]);
-    } catch (error) {
-        console.error('Database Error:', error);
+    } catch (error: any) {
+        console.error('Database Error deleting equipment:', error.message);
         throw new Error('Failed to delete equipment item.');
     }
     revalidatePath('/dashboard/equipment');
@@ -148,15 +148,15 @@ export async function getDashboardStats() {
             lost: lostResult[0].count,
             error: null,
         };
-    } catch (error) {
-        console.error('Database Error:', error);
+    } catch (error: any) {
+        console.error('Database Connection Error:', error.message);
         // Return default values and an error message instead of throwing
         return {
             total: 0,
             usable: 0,
             broken: 0,
             lost: 0,
-            error: 'Failed to connect to the database. Please check your configuration.',
+            error: `Failed to connect to the database. Please check your configuration. (${error.code})`,
         }
     }
 }
@@ -168,9 +168,8 @@ export async function getRecentActivity(): Promise<EquipmentItem[]> {
             ...item,
             purchaseDate: new Date(item.purchaseDate).toISOString().split('T')[0],
         }));
-    } catch (error) {
-        console.error('Database Error:', error);
-        // Return empty array on error to prevent crash
+    } catch (error: any) {
+        console.error('Database Error getting recent activity:', error.message);
         return [];
     }
 }
