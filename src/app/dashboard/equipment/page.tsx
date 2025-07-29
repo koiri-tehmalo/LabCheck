@@ -2,12 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
 import { EquipmentTable } from "@/components/dashboard/equipment-table";
-import { mockEquipmentItems } from "@/data/mock-data";
 import Link from "next/link";
+import { getEquipmentItems } from "@/lib/actions";
 
-export default function EquipmentPage() {
-  // In a real app, data fetching would be done here
-  const equipment = mockEquipmentItems;
+export default async function EquipmentPage() {
+  const equipment = await getEquipmentItems();
 
   return (
     <div className="flex flex-col gap-8">

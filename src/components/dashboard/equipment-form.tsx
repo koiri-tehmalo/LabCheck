@@ -35,6 +35,7 @@ import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentItem } from "@/lib/types"
+import { saveEquipment, updateEquipment } from "@/lib/actions"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -69,15 +70,40 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
     },
   })
 
-  function onSubmit(values: EquipmentFormValues) {
-    // In a real app, you would send this data to your API.
-    // For this demo, we'll just show a toast and redirect.
-    console.log(values);
-    toast({
-      title: isEditing ? "Equipment Updated" : "Equipment Added",
-      description: `The equipment "${values.name}" has been successfully ${isEditing ? 'updated' : 'saved'}.`,
+  async function onSubmit(values: EquipmentFormValues) {
+    const formData = new FormData();
+    Object.entries(values).forEach(([key, value]) => {
+      if (value) {
+        if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else {
+          formData.append(key, value);
+        }
+      }
     });
-    router.push('/dashboard/equipment');
+
+    try {
+      if (isEditing) {
+        await updateEquipment(defaultValues!.id!, formData);
+        toast({
+          title: "Equipment Updated",
+          description: `The equipment "${values.name}" has been successfully updated.`,
+        });
+      } else {
+        await saveEquipment(formData);
+        toast({
+          title: "Equipment Added",
+          description: `The equipment "${values.name}" has been successfully saved.`,
+        });
+      }
+      // Redirect is handled by server action
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `There was an error saving the equipment. Please try again.`,
+        variant: "destructive",
+      });
+    }
   }
 
   return (

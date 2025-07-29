@@ -1,7 +1,6 @@
 
 'use client';
 
-import { mockEquipmentItems } from '@/data/mock-data';
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { StatusBadge } from '@/components/dashboard/status-badge';
@@ -11,6 +10,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
+import { getEquipmentItemById } from '@/lib/actions';
+import type { EquipmentItem } from '@/lib/types';
 
 async function generateQRCode(text: string) {
     try {
@@ -28,24 +29,31 @@ async function generateQRCode(text: string) {
 }
 
 export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
+  const [item, setItem] = useState<EquipmentItem | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
-  
-  const item = mockEquipmentItems.find(i => i.id === params.id);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (item) {
-      // In a real app, you'd get the full URL from the request or environment variables.
-      const assetUrl = `${window.location.origin}/dashboard/equipment/${item.id}`;
-      generateQRCode(assetUrl).then(setQrCodeDataUrl);
+    async function fetchItem() {
+      const fetchedItem = await getEquipmentItemById(params.id);
+      if (!fetchedItem) {
+        notFound();
+      } else {
+        setItem(fetchedItem);
+        const assetUrl = `${window.location.origin}/dashboard/equipment/${fetchedItem.id}`;
+        generateQRCode(assetUrl).then(setQrCodeDataUrl);
+      }
+      setLoading(false);
     }
-  }, [item]);
+    fetchItem();
+  }, [params.id]);
 
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!item) {
-    // Render a loading state or return notFound() on the server-side pass
-    if (typeof window === 'undefined') {
-      return null; 
-    }
     return notFound();
   }
   

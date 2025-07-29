@@ -13,29 +13,51 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { mockEquipmentItems } from '@/data/mock-data';
+import { deleteEquipment, getEquipmentItemById } from '@/lib/actions';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import type { EquipmentItem } from '@/lib/types';
+
 
 export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  const item = mockEquipmentItems.find((i) => i.id === params.id);
+  const [item, setItem] = useState<EquipmentItem | null>(null);
+
+   useEffect(() => {
+    async function fetchItem() {
+      const fetchedItem = await getEquipmentItemById(params.id);
+       if (!fetchedItem) {
+        notFound();
+      } else {
+        setItem(fetchedItem);
+      }
+    }
+    fetchItem();
+  }, [params.id]);
 
   if (!item) {
-    notFound();
+    return <div>Loading...</div>;
   }
 
-  const handleDelete = () => {
-    // In a real app, you would make an API call to delete the item.
-    console.log(`Deleting item: ${item.id}`);
-    toast({
-      title: 'Equipment Deleted',
-      description: `The asset "${item.name}" has been deleted.`,
-      variant: 'destructive',
-    });
-    router.push('/dashboard/equipment');
+  const handleDelete = async () => {
+    try {
+        await deleteEquipment(item.id);
+        toast({
+            title: 'Equipment Deleted',
+            description: `The asset "${item.name}" has been deleted.`,
+            variant: 'destructive',
+        });
+        // router.push is handled by the redirect in the server action
+    } catch (error) {
+        toast({
+            title: 'Error',
+            description: 'Failed to delete equipment.',
+            variant: 'destructive',
+        });
+    }
   };
 
   return (

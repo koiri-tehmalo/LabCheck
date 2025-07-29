@@ -3,14 +3,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, FileText } from 'lucide-react';
-import { mockEquipmentItems } from '@/data/mock-data';
+import { getEquipmentItems } from '@/lib/actions';
 import * as XLSX from 'xlsx';
 import type { EquipmentItem } from '@/lib/types';
+import { useEffect, useState } from 'react';
 
 export default function ReportsPage() {
+  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
+
+  useEffect(() => {
+    getEquipmentItems().then(setEquipment);
+  }, []);
 
   const handleExport = () => {
-    const dataToExport = mockEquipmentItems.map(item => ({
+    if (equipment.length === 0) return;
+
+    const dataToExport = equipment.map(item => ({
         'Asset ID': item.id,
         'Name': item.name,
         'Model': item.model,
@@ -25,7 +33,6 @@ export default function ReportsPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Equipment Report");
 
-    // Adjust column widths
     const columnWidths = [
         { wch: 15 }, // Asset ID
         { wch: 25 }, // Name
@@ -60,7 +67,7 @@ export default function ReportsPage() {
                   <CardDescription>Export a complete list of all equipment assets.</CardDescription>
               </div>
             </div>
-            <Button onClick={handleExport}>
+            <Button onClick={handleExport} disabled={equipment.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               Export to Excel
             </Button>

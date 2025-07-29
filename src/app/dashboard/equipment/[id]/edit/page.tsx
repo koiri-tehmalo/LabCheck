@@ -2,11 +2,11 @@
 
 import { EquipmentForm } from "@/components/dashboard/equipment-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockEquipmentItems } from "@/data/mock-data";
+import { getEquipmentItemById } from "@/lib/actions";
 import { notFound } from "next/navigation";
 
-export default function EditEquipmentPage({ params }: { params: { id: string } }) {
-  const item = mockEquipmentItems.find(i => i.id === params.id);
+export default async function EditEquipmentPage({ params }: { params: { id: string } }) {
+  const item = await getEquipmentItemById(params.id);
 
   if (!item) {
     notFound();

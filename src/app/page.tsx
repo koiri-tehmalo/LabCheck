@@ -1,26 +1,23 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockEquipmentItems, mockUser } from "@/data/mock-data";
 import { HardDrive, AlertTriangle, CheckCircle, HelpCircle, Plus, Camera, FileText, Component } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
+import { getDashboardStats, getRecentActivity } from "@/lib/actions";
+import { mockUser } from "@/data/mock-data";
 
-export default function DashboardPage() {
-  const total = mockEquipmentItems.length;
-  const usable = mockEquipmentItems.filter(item => item.status === 'usable').length;
-  const broken = mockEquipmentItems.filter(item => item.status === 'broken').length;
-  const lost = mockEquipmentItems.filter(item => item.status === 'lost').length;
+export default async function DashboardPage() {
+  const { total, usable, broken, lost } = await getDashboardStats();
+  const recentActivity = await getRecentActivity();
 
-  const stats = [
+  const statsForChart = [
     { label: 'Usable', count: usable, color: 'bg-green-500' },
     { label: 'Broken', count: broken, color: 'bg-orange-500' },
     { label: 'Lost', count: lost, color: 'bg-red-500' },
   ];
-
-  const recentActivity = mockEquipmentItems.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,25 +95,25 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/equipment/new">
+            <Link href="/dashboard/equipment/new">
               <Plus className="h-6 w-6 mb-1" />
               <span>Add Asset</span>
             </Link>
           </Button>
           <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/equipment">
+            <Link href="/dashboard/equipment">
               <Camera className="h-6 w-6 mb-1" />
               <span>Scan Equipment</span>
             </Link>
           </Button>
           <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/reports">
+            <Link href="/dashboard/reports">
               <FileText className="h-6 w-6 mb-1" />
               <span>Generate Report</span>
             </Link>
           </Button>
           <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/sets">
+            <Link href="/dashboard/sets">
               <Component className="h-6 w-6 mb-1" />
               <span>Equipment Sets</span>
             </Link>
@@ -130,7 +127,7 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Recent Activity</CardTitle>
                  <Button variant="link" asChild>
-                    <Link href="/equipment">View all →</Link>
+                    <Link href="/dashboard/equipment">View all →</Link>
                 </Button>
             </CardHeader>
             <CardContent>
@@ -147,7 +144,7 @@ export default function DashboardPage() {
                             {recentActivity.map(item => (
                                 <tr key={item.id} className="border-t">
                                     <td className="py-2">
-                                        <Link href={`/equipment/${item.id}`} className="font-medium hover:underline">
+                                        <Link href={`/dashboard/equipment/${item.id}`} className="font-medium hover:underline">
                                             {item.name}
                                         </Link>
                                         <div className="text-xs text-muted-foreground">{item.id}</div>
@@ -168,13 +165,13 @@ export default function DashboardPage() {
                 <CardTitle>Overview</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {stats.map(({ label, count, color }) => {
+              {statsForChart.map(({ label, count, color }) => {
                 const percent = total > 0 ? (count / total) * 100 : 0;
                 return (
                   <div key={label}>
                     <div className="flex justify-between items-center mb-1 text-sm">
                       <div className="flex items-center gap-2">
-                         <span className="h-2 w-2 rounded-full ${color}" />
+                         <span className={`h-2 w-2 rounded-full ${color}`} />
                          <span className="font-medium">{label}</span>
                       </div>
                       <span className="text-muted-foreground">{count} ({percent.toFixed(1)}%)</span>
