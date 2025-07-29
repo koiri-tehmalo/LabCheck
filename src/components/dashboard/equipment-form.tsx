@@ -77,14 +77,14 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
         if (value instanceof Date) {
           formData.append(key, value.toISOString());
         } else {
-          formData.append(key, value);
+          formData.append(key, value as string);
         }
       }
     });
 
     try {
-      if (isEditing) {
-        await updateEquipment(defaultValues!.id!, formData);
+      if (isEditing && defaultValues?.id) {
+        await updateEquipment(defaultValues.id, formData);
         toast({
           title: "Equipment Updated",
           description: `The equipment "${values.name}" has been successfully updated.`,
@@ -219,7 +219,7 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
               <FormItem>
                 <FormLabel>Equipment Set ID (Optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., SET-01" {...field} />
+                  <Input placeholder="e.g., SET-01" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -237,6 +237,7 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
                         placeholder="Any relevant notes about the asset..."
                         className="resize-none"
                         {...field}
+                         value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
