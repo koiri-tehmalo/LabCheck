@@ -1,29 +1,16 @@
-'use client'
-
 import { EquipmentForm } from "@/components/dashboard/equipment-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEquipmentItemById } from "@/lib/actions";
 import { notFound } from "next/navigation";
-import { useEffect, useState } from "react";
 import type { EquipmentItem } from "@/lib/types";
 
-export default function EditEquipmentPage({ params }: { params: { id: string } }) {
-  const [item, setItem] = useState<EquipmentItem | null>(null);
-
-  useEffect(() => {
-    getEquipmentItemById(params.id).then(fetchedItem => {
-      if (!fetchedItem) {
-        notFound();
-      }
-      setItem(fetchedItem);
-    });
-  }, [params.id]);
-
+export default async function EditEquipmentPage({ params }: { params: { id: string } }) {
+  const item = await getEquipmentItemById(params.id);
 
   if (!item) {
-    return <div>Loading...</div>;
+    notFound();
   }
-
+  
   return (
     <div className="flex flex-col gap-8">
        <Card>

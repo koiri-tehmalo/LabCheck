@@ -1,52 +1,57 @@
-'use client';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, FileText } from 'lucide-react';
 import { getEquipmentItems } from '@/lib/actions';
 import * as XLSX from 'xlsx';
 import type { EquipmentItem } from '@/lib/types';
-import { useEffect, useState } from 'react';
 
-export default function ReportsPage() {
-  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
 
-  useEffect(() => {
-    getEquipmentItems().then(setEquipment);
-  }, []);
+function ExportButton({ equipment }: { equipment: EquipmentItem[] }) {
+    'use client';
+    const handleExport = () => {
+        if (equipment.length === 0) return;
 
-  const handleExport = () => {
-    if (equipment.length === 0) return;
+        const dataToExport = equipment.map(item => ({
+            'Asset ID': item.id,
+            'Name': item.name,
+            'Model': item.model,
+            'Status': item.status,
+            'Location': item.location,
+            'Purchase Date': new Date(item.purchaseDate).toLocaleDateString(),
+            'Set ID': item.setId || 'N/A',
+            'Notes': item.notes || ''
+        }));
 
-    const dataToExport = equipment.map(item => ({
-        'Asset ID': item.id,
-        'Name': item.name,
-        'Model': item.model,
-        'Status': item.status,
-        'Location': item.location,
-        'Purchase Date': new Date(item.purchaseDate).toLocaleDateString(),
-        'Set ID': item.setId || 'N/A',
-        'Notes': item.notes || ''
-    }));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Equipment Report");
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Equipment Report");
+        const columnWidths = [
+            { wch: 15 }, // Asset ID
+            { wch: 25 }, // Name
+            { wch: 20 }, // Model
+            { wch: 10 }, // Status
+            { wch: 20 }, // Location
+            { wch: 15 }, // Purchase Date
+            { wch: 10 }, // Set ID
+            { wch: 40 }, // Notes
+        ];
+        worksheet['!cols'] = columnWidths;
 
-    const columnWidths = [
-        { wch: 15 }, // Asset ID
-        { wch: 25 }, // Name
-        { wch: 20 }, // Model
-        { wch: 10 }, // Status
-        { wch: 20 }, // Location
-        { wch: 15 }, // Purchase Date
-        { wch: 10 }, // Set ID
-        { wch: 40 }, // Notes
-    ];
-    worksheet['!cols'] = columnWidths;
+        XLSX.writeFile(workbook, "Equipment_Report.xlsx");
+    };
+    
+    return (
+        <Button onClick={handleExport} disabled={equipment.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export to Excel
+        </Button>
+    )
 
-    XLSX.writeFile(workbook, "Equipment_Report.xlsx");
-  };
+}
+
+export default async function ReportsPage() {
+  const equipment = await getEquipmentItems();
 
   return (
     <div className="flex flex-col gap-8">
@@ -67,10 +72,7 @@ export default function ReportsPage() {
                   <CardDescription>Export a complete list of all equipment assets.</CardDescription>
               </div>
             </div>
-            <Button onClick={handleExport} disabled={equipment.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export to Excel
-            </Button>
+            <ExportButton equipment={equipment} />
           </div>
         </CardHeader>
         <CardContent>

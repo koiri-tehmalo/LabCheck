@@ -1,6 +1,3 @@
-
-'use client';
-
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { StatusBadge } from '@/components/dashboard/status-badge';
@@ -9,9 +6,7 @@ import { ArrowLeft, Download, Printer } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import QRCode from 'qrcode';
-import { useEffect, useState } from 'react';
 import { getEquipmentItemById } from '@/lib/actions';
-import type { EquipmentItem } from '@/lib/types';
 
 async function generateQRCode(text: string) {
     try {
@@ -28,51 +23,50 @@ async function generateQRCode(text: string) {
     }
 }
 
-export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
-  const [item, setItem] = useState<EquipmentItem | null>(null);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+// A client component to handle print and download which need browser APIs
+function PrintAndDownloadButtons({ qrCodeDataUrl, itemId }: { qrCodeDataUrl: string | null; itemId: string }) {
+    'use client';
+    const handleDownload = () => {
+        if (!qrCodeDataUrl) return;
+        const link = document.createElement('a');
+        link.href = qrCodeDataUrl;
+        link.download = `${itemId}_qrcode.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
-  useEffect(() => {
-    async function fetchItem() {
-      const fetchedItem = await getEquipmentItemById(params.id);
-      if (!fetchedItem) {
-        notFound();
-      } else {
-        setItem(fetchedItem);
-        const assetUrl = `${window.location.origin}/dashboard/equipment/${fetchedItem.id}`;
-        generateQRCode(assetUrl).then(setQrCodeDataUrl);
-      }
-      setLoading(false);
-    }
-    fetchItem();
-  }, [params.id]);
+    const handlePrint = () => {
+        window.print();
+    };
+
+    return (
+        <div className="flex gap-2 w-full print:hidden">
+            <Button variant="outline" className="w-full" onClick={handleDownload} disabled={!qrCodeDataUrl}>
+                <Download className="mr-2 h-4 w-4" /> PNG
+            </Button>
+            <Button variant="outline" className="w-full" onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" /> Print
+            </Button>
+        </div>
+    );
+}
 
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+export default async function EquipmentDetailPage({ params }: { params: { id: string } }) {
+  const item = await getEquipmentItemById(params.id);
 
   if (!item) {
     return notFound();
   }
+
+  // We can't know the full URL on the server, so we generate a relative one
+  // and the QR code will point to that.
+  const assetUrl = `/dashboard/equipment/${item.id}`;
+  const qrCodeDataUrl = await generateQRCode(assetUrl);
   
-  const handleDownload = () => {
-    if (!qrCodeDataUrl) return;
-    const link = document.createElement('a');
-    link.href = qrCodeDataUrl;
-    link.download = `${item.id}_qrcode.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  }
-
   return (
-    <div className="flex flex-col gap-8 print:gap-4">
+    <div className="flex flex-col gap-8 print:gap-4 printable-area">
        <div className="print:hidden">
         <Button variant="outline" asChild>
             <Link href="/dashboard/equipment">
@@ -145,14 +139,7 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
                             Could not generate QR code.
                         </div>
                     )}
-                    <div className="flex gap-2 w-full print:hidden">
-                         <Button variant="outline" className="w-full" onClick={handleDownload} disabled={!qrCodeDataUrl}>
-                            <Download className="mr-2 h-4 w-4" /> PNG
-                        </Button>
-                        <Button variant="outline" className="w-full" onClick={handlePrint}>
-                            <Printer className="mr-2 h-4 w-4" /> Print
-                        </Button>
-                    </div>
+                   <PrintAndDownloadButtons qrCodeDataUrl={qrCodeDataUrl} itemId={item.id} />
                 </CardContent>
             </Card>
         </div>

@@ -1,7 +1,3 @@
-
-
-'use client';
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardDrive, AlertTriangle, CheckCircle, HelpCircle, Plus, Camera, FileText, Component, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +5,7 @@ import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { getDashboardStats, getRecentActivity, getUser } from "@/lib/actions";
-import { useEffect, useState } from "react";
 import type { EquipmentItem, User } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
@@ -23,32 +17,16 @@ type DashboardStats = {
   error?: string | null;
 }
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0 });
-  const [recentActivity, setRecentActivity] = useState<EquipmentItem[]>([]);
-  const [user, setUser] = useState<User | null>(null);
-  const { toast } = useToast();
+export default async function DashboardPage() {
+  const statsPromise = getDashboardStats();
+  const recentActivityPromise = getRecentActivity();
+  const userPromise = getUser();
 
-  useEffect(() => {
-    async function fetchData() {
-      const dashboardStats = await getDashboardStats();
-      if (dashboardStats.error) {
-         toast({
-          variant: "destructive",
-          title: "Database Connection Error",
-          description: "Could not connect to the database. Please check console for details.",
-        });
-      }
-      setStats(dashboardStats);
-
-      const recentItems = await getRecentActivity();
-      setRecentActivity(recentItems);
-
-      const currentUser = await getUser();
-      setUser(currentUser);
-    }
-    fetchData();
-  }, [toast]);
+  const [stats, recentActivity, user] = await Promise.all([
+    statsPromise,
+    recentActivityPromise,
+    userPromise
+  ]);
   
   const { total, usable, broken, lost } = stats;
 
