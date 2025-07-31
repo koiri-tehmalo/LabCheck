@@ -88,7 +88,7 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
   async function onSubmit(values: EquipmentFormValues) {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (value) {
+      if (value !== null && value !== undefined) {
         if (value instanceof Date) {
           formData.append(key, value.toISOString());
         } else {
