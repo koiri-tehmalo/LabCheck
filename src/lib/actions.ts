@@ -67,7 +67,7 @@ export async function saveEquipment(formData: FormData) {
         status: formData.get('status'),
         location: formData.get('location'),
         purchaseDate: new Date(formData.get('purchaseDate') as string),
-        notes: formData.get('notes'),
+        notes: formData.get('notes') || '',
         setId: formData.get('setId') === 'none' ? '' : formData.get('setId'),
     });
 
@@ -77,7 +77,12 @@ export async function saveEquipment(formData: FormData) {
     }
 
     try {
-        await addDoc(collection(db, "equipment"), validatedFields.data);
+        const dataToSave = {
+            ...validatedFields.data,
+            notes: validatedFields.data.notes || '',
+            setId: validatedFields.data.setId || '',
+        };
+        await addDoc(collection(db, "equipment"), dataToSave);
     } catch (error: any) {
         console.error('Firestore Error saving equipment:', error.message);
         throw new Error('Failed to create equipment item.');
