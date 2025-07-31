@@ -34,7 +34,7 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import type { EquipmentItem } from "@/lib/types"
+import type { EquipmentItem, EquipmentStatus } from "@/lib/types"
 import { getSetOptions, saveEquipment, updateEquipment } from "@/lib/actions"
 import { useEffect, useState } from "react";
 
@@ -75,8 +75,12 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ...defaultValues,
+      name: defaultValues?.name || '',
+      model: defaultValues?.model || '',
+      status: defaultValues?.status || 'usable',
+      location: defaultValues?.location || '',
       notes: defaultValues?.notes || '',
+      setId: defaultValues?.setId || '',
       purchaseDate: defaultValues?.purchaseDate ? new Date(defaultValues.purchaseDate) : new Date(),
     },
   })
