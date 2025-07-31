@@ -1,5 +1,6 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardDrive, AlertTriangle, CheckCircle, HelpCircle, Plus, Camera, FileText, Component, ServerCrash } from "lucide-react";
+import { HardDrive, TriangleAlert, CircleCheckBig, CircleHelp, Plus, Camera, FileText, Component, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -44,7 +45,7 @@ export default async function DashboardPage() {
           <div>
             <h2 className="text-2xl font-bold">Welcome, {user?.name ?? '...'}!</h2>
             <p className="opacity-80">
-              Today is {new Date().toLocaleDateString('en-US', {
+              {new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -95,19 +96,19 @@ export default async function DashboardPage() {
                               <td className="px-6 py-4 font-medium">Usable Assets</td>
                               <td className="px-6 py-4">{usable}</td>
                               <td className="px-6 py-4 text-muted-foreground">Items ready for use</td>
-                              <td className="px-6 py-4 flex justify-center"><CheckCircle className="h-5 w-5 text-green-600"/></td>
+                              <td className="px-6 py-4 flex justify-center"><CircleCheckBig className="h-5 w-5 text-green-600"/></td>
                           </tr>
                           <tr className="border-b bg-orange-500/10">
                               <td className="px-6 py-4 font-medium">Broken Assets</td>
                               <td className="px-6 py-4">{broken}</td>
                               <td className="px-6 py-4 text-muted-foreground">Items needing repair</td>
-                              <td className="px-6 py-4 flex justify-center"><AlertTriangle className="h-5 w-5 text-orange-600"/></td>
+                              <td className="px-6 py-4 flex justify-center"><TriangleAlert className="h-5 w-5 text-orange-600"/></td>
                           </tr>
                           <tr className="bg-red-500/10">
                               <td className="px-6 py-4 font-medium">Lost Assets</td>
                               <td className="px-6 py-4">{lost}</td>
                               <td className="px-6 py-4 text-muted-foreground">Missing items</td>
-                              <td className="px-6 py-4 flex justify-center"><HelpCircle className="h-5 w-5 text-red-600"/></td>
+                              <td className="px-6 py-4 flex justify-center"><CircleHelp className="h-5 w-5 text-red-600"/></td>
                           </tr>
                       </tbody>
                   </table>
@@ -122,7 +123,7 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/dashboard/equipment/new">
+            <Link href="/dashboard/equipment">
               <Plus className="h-6 w-6 mb-1" />
               <span>Add Asset</span>
             </Link>

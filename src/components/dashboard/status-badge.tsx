@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { EquipmentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { CheckCircle, AlertTriangle, HelpCircle } from "lucide-react";
+import { CircleCheckBig, TriangleAlert, CircleHelp } from "lucide-react";
 
 type StatusBadgeProps = {
   status: EquipmentStatus;
@@ -10,17 +10,17 @@ type StatusBadgeProps = {
 const statusConfig = {
   usable: {
     label: "Usable",
-    icon: CheckCircle,
+    icon: CircleCheckBig,
     className: "bg-green-100 text-green-800 border-green-200 hover:bg-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
   },
   broken: {
     label: "Broken",
-    icon: AlertTriangle,
+    icon: TriangleAlert,
     className: "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800",
   },
   lost: {
     label: "Lost",
-    icon: HelpCircle,
+    icon: CircleHelp,
     className: "bg-red-100 text-red-800 border-red-200 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800",
   },
 };
