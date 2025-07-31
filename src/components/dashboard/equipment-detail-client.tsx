@@ -100,7 +100,7 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
                         </div>
                         <div>
                             <p className="font-medium text-muted-foreground">Purchase Date</p>
-                            <p>{new Date(item.purchaseDate).toLocaleDateString()}</p>
+                            <p>{new Date(item.purchaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         </div>
                         {item.setId && (
                             <div>
