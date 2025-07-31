@@ -225,7 +225,6 @@ export async function saveEquipmentSet(formData: FormData) {
     }
 
     revalidatePath('/dashboard/sets');
-    redirect('/dashboard/sets');
 }
 
 

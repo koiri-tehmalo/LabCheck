@@ -13,7 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { saveEquipmentSet } from "@/lib/actions"
 import type { EquipmentSet } from "@/lib/types";
@@ -30,10 +29,10 @@ type SetFormValues = z.infer<typeof formSchema>
 interface SetFormProps {
   defaultValues?: Partial<EquipmentSet>;
   isEditing?: boolean;
+  onSuccess?: () => void;
 }
 
-export function SetForm({ defaultValues, isEditing = false }: SetFormProps) {
-  const router = useRouter();
+export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetFormProps) {
   const { toast } = useToast();
   
   const form = useForm<SetFormValues>({
@@ -66,7 +65,9 @@ export function SetForm({ defaultValues, isEditing = false }: SetFormProps) {
           description: `The set "${values.name}" has been successfully created.`,
         });
       }
-      // Redirect is handled by server action
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -108,7 +109,7 @@ export function SetForm({ defaultValues, isEditing = false }: SetFormProps) {
           />
         </div>
         <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+            <Button type="button" variant="outline" onClick={onSuccess}>
                 Cancel
             </Button>
             <Button type="submit">{isEditing ? 'Save Changes' : 'Create Set'}</Button>
