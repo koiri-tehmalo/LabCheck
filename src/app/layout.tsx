@@ -21,7 +21,8 @@ import {
   Component,
   FileText,
   LogOut,
-  LogIn
+  LogIn,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { getUser } from '@/lib/actions';
@@ -92,9 +93,19 @@ export default async function RootLayout({
                         </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  {user?.role === 'admin' && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Users">
+                        <Link href="/dashboard/users">
+                          <Users />
+                          <span>Users</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                 </SidebarMenu>
               </SidebarContent>
-              {user && (
+              {user ? (
                 <SidebarFooter className="p-4 border-t border-sidebar-border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 overflow-hidden">
@@ -114,6 +125,15 @@ export default async function RootLayout({
                     </Button>
                   </div>
                 </SidebarFooter>
+              ) : (
+                 <SidebarFooter className="p-4 border-t border-sidebar-border">
+                    <Button asChild>
+                      <Link href="/login">
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign In
+                      </Link>
+                    </Button>
+                 </SidebarFooter>
               )}
             </Sidebar>
             <div className="flex-1 flex flex-col">

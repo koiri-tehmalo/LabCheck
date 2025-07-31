@@ -45,6 +45,8 @@ export default function SetsPage() {
     setIsAddModalOpen(false);
     fetchSetsAndUser(); // Refresh data
   };
+  
+  const canManage = user?.role === 'admin' || user?.role === 'auditor';
 
   return (
     <div className="flex flex-col gap-8">
@@ -53,7 +55,7 @@ export default function SetsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Equipment Sets</h1>
           <p className="text-muted-foreground">Manage groups of related equipment.</p>
         </div>
-        {user?.role === 'admin' && (
+        {canManage && (
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
                 <Button>

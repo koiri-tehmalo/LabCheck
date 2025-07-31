@@ -56,7 +56,7 @@ export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps
       setEditingItem(null);
   }
 
-  const isAdmin = user?.role === 'admin';
+  const canManage = user?.role === 'admin' || user?.role === 'auditor';
 
   return (
     <>
@@ -101,7 +101,7 @@ export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps
                           <QrCode className="mr-2 h-4 w-4" /> View Details & QR
                          </Link>
                       </DropdownMenuItem>
-                      {isAdmin && (
+                      {canManage && (
                         <>
                           <DropdownMenuItem onClick={() => handleEditClick(item)} className="flex items-center">
                             <Pencil className="mr-2 h-4 w-4" /> Edit

@@ -43,6 +43,8 @@ export default function EquipmentPage() {
     fetchEquipmentAndUser(); // Refresh data
   };
 
+  const canManage = user?.role === 'admin' || user?.role === 'auditor';
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -55,7 +57,7 @@ export default function EquipmentPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search equipment..." className="pl-10" />
         </div>
-        {user?.role === 'admin' && (
+        {canManage && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
               <Button>

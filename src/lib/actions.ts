@@ -232,12 +232,49 @@ export async function getUser(): Promise<User | null> {
     // This is a mock user. In a real app, you'd use Firebase Auth.
     // To test different roles, change 'admin' to 'auditor' or return null for a guest user.
     return {
+        id: 'admin-user',
         name: 'Admin User',
         email: 'admin@example.com',
         avatar: 'https://placehold.co/100x100.png',
         role: 'admin',
     };
+     // return {
+    //     id: 'auditor-user',
+    //     name: 'Auditor User',
+    //     email: 'auditor@example.com',
+    //     avatar: 'https://placehold.co/100x100.png',
+    //     role: 'auditor',
+    // };
+    // return null; // Guest user
 }
+
+export async function getUsers(): Promise<User[]> {
+    // This is a mock user list. In a real app, you'd fetch this from your database.
+    return [
+         {
+            id: 'admin-user',
+            name: 'Admin User',
+            email: 'admin@example.com',
+            avatar: 'https://placehold.co/100x100.png',
+            role: 'admin',
+        },
+        {
+            id: 'auditor-user-1',
+            name: 'Alice Auditor',
+            email: 'alice@example.com',
+            avatar: 'https://placehold.co/100x100.png',
+            role: 'auditor',
+        },
+        {
+            id: 'auditor-user-2',
+            name: 'Bob Inspector',
+            email: 'bob@example.com',
+            avatar: 'https://placehold.co/100x100.png',
+            role: 'auditor',
+        }
+    ]
+}
+
 
 export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
     try {
