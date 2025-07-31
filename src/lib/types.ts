@@ -10,9 +10,8 @@ export type EquipmentItem = {
   id: string;
   name: string;
   model: string;
-  purchaseDate: string;
+  purchaseDate: string; // Stored as ISO string
   status: EquipmentStatus;
-  qrCodeUrl?: string;
   location: string;
   notes?: string;
   setId?: string;
