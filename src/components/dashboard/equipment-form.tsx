@@ -88,8 +88,14 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
 
   async function onSubmit(values: EquipmentFormValues) {
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-        // Append all values, even empty strings, but exclude null/undefined
+    const dataToSubmit = {
+      ...values,
+      setId: values.setId === 'none' ? '' : values.setId,
+    };
+
+
+    Object.entries(dataToSubmit).forEach(([key, value]) => {
+        // Append all values, but exclude null/undefined
         if (value !== null && value !== undefined) {
              if (value instanceof Date) {
                 formData.append(key, value.toISOString());
@@ -257,7 +263,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
                         </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        <SelectItem value="">-- No Set --</SelectItem>
+                        <SelectItem value="none">-- No Set --</SelectItem>
                         {setOptions.map(option => (
                             <SelectItem key={option.id} value={option.id}>
                                 {option.name} ({option.id})
