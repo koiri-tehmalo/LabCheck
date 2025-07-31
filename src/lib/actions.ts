@@ -7,6 +7,9 @@ import { z } from 'zod';
 import { db } from './firebase';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId } from 'firebase/firestore';
 import type { EquipmentItem, EquipmentSet, User } from './types';
+import { auth } from 'firebase-admin';
+import { cookies } from 'next/headers';
+import { cache } from 'react';
 
 // Schema for form validation
 const equipmentFormSchema = z.object({
@@ -227,52 +230,43 @@ export async function saveEquipmentSet(formData: FormData) {
     revalidatePath('/dashboard/sets');
 }
 
-
-export async function getUser(): Promise<User | null> {
-    // This is a mock user. In a real app, you'd use Firebase Auth.
-    // To test different roles, change 'admin' to 'auditor' or return null for a guest user.
+export const getUser = cache(async (): Promise<User | null> => {
+  const sessionCookie = cookies().get('session')?.value;
+  if (!sessionCookie) {
+    return null;
+  }
+  try {
+    const decodedClaims = await auth().verifySessionCookie(sessionCookie, true);
+    const firebaseUser = await auth().getUser(decodedClaims.uid);
+    
     return {
-        id: 'admin-user',
-        name: 'Admin User',
-        email: 'admin@example.com',
-        avatar: 'https://placehold.co/100x100.png',
-        role: 'admin',
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || 'No Name',
+      email: firebaseUser.email || '',
+      avatar: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+      role: (firebaseUser.customClaims?.role as 'admin' | 'auditor') || 'guest',
     };
-     // return {
-    //     id: 'auditor-user',
-    //     name: 'Auditor User',
-    //     email: 'auditor@example.com',
-    //     avatar: 'https://placehold.co/100x100.png',
-    //     role: 'auditor',
-    // };
-    // return null; // Guest user
-}
+  } catch (error) {
+    console.error('Error verifying session cookie:', error);
+    return null;
+  }
+});
+
 
 export async function getUsers(): Promise<User[]> {
-    // This is a mock user list. In a real app, you'd fetch this from your database.
-    return [
-         {
-            id: 'admin-user',
-            name: 'Admin User',
-            email: 'admin@example.com',
-            avatar: 'https://placehold.co/100x100.png',
-            role: 'admin',
-        },
-        {
-            id: 'auditor-user-1',
-            name: 'Alice Auditor',
-            email: 'alice@example.com',
-            avatar: 'https://placehold.co/100x100.png',
-            role: 'auditor',
-        },
-        {
-            id: 'auditor-user-2',
-            name: 'Bob Inspector',
-            email: 'bob@example.com',
-            avatar: 'https://placehold.co/100x100.png',
-            role: 'auditor',
-        }
-    ]
+    try {
+        const userRecords = await auth().listUsers();
+        return userRecords.users.map(user => ({
+            id: user.uid,
+            name: user.displayName || 'No Name',
+            email: user.email || '',
+            avatar: user.photoURL || 'https://placehold.co/100x100.png',
+            role: (user.customClaims?.role as 'admin' | 'auditor') || 'guest',
+        }));
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+    }
 }
 
 
@@ -286,4 +280,9 @@ export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
         console.error('Firestore Error getting set options:', error.message);
         return [];
     }
+}
+
+export async function signOut() {
+    cookies().delete('session');
+    redirect('/login');
 }

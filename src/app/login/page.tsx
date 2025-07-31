@@ -1,18 +1,47 @@
-import { LoginForm } from '@/components/auth/login-form';
+
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import StyledFirebaseAuth from '@/lib/firebaseui';
+import uiConfig from '@/lib/firebaseui.config';
 import { HardDrive } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    const unregisterAuthObserver = onAuthStateChanged(auth, (user) => {
+      const signedIn = !!user;
+      setIsSignedIn(signedIn);
+      if (signedIn) {
+        router.push('/');
+      }
+    });
+    return () => unregisterAuthObserver();
+  }, [router]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center text-center mb-8">
+         <div className="flex flex-col items-center text-center mb-8">
             <div className="p-3 bg-primary rounded-full text-primary-foreground mb-4">
                 <HardDrive className="h-8 w-8" />
             </div>
           <h1 className="text-3xl font-bold text-primary tracking-tight">Asset Tracker</h1>
-          <p className="text-muted-foreground mt-2">Welcome back! Please sign in to continue.</p>
+          <p className="text-muted-foreground mt-2">Welcome! Please sign in to continue.</p>
         </div>
-        <LoginForm />
+        {!isSignedIn && (
+            <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
+        )}
+        {isSignedIn && (
+             <div className="text-center">
+                <p>You are signed in. Redirecting...</p>
+            </div>
+        )}
       </div>
     </main>
   );

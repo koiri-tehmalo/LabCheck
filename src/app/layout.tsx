@@ -25,7 +25,7 @@ import {
   Users
 } from 'lucide-react';
 import Link from 'next/link';
-import { getUser } from '@/lib/actions';
+import { getUser, signOut } from '@/lib/actions';
 
 export const metadata: Metadata = {
   title: 'Asset Tracker',
@@ -41,7 +41,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <head>
+       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -118,11 +118,11 @@ export default async function RootLayout({
                         <span className="text-muted-foreground text-xs">{user.email}</span>
                       </div>
                     </div>
-                    <Button asChild variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                      <Link href="/login">
-                        <LogOut className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                    <form action={signOut}>
+                        <Button type="submit" variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                            <LogOut className="h-4 w-4" />
+                        </Button>
+                    </form>
                   </div>
                 </SidebarFooter>
               ) : (
