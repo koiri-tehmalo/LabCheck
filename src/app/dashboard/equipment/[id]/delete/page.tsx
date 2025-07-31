@@ -18,6 +18,7 @@ import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { EquipmentItem } from '@/lib/types';
+import { useEffect, useState } from 'react';
 
 
 function DeleteConfirmation({ item }: { item: EquipmentItem }) {
@@ -69,11 +70,16 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
 }
 
 
-export default async function DeleteEquipmentPage({ params }: { params: { id: string } }) {
-  const item = await getEquipmentItemById(params.id);
+export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
+  const [item, setItem] = useState<EquipmentItem | null>(null);
+
+  useEffect(() => {
+    getEquipmentItemById(params.id).then(setItem);
+  }, [params.id]);
+
 
   if (!item) {
-    return <div>Equipment not found.</div>;
+    return <div>Loading...</div>;
   }
 
   return (
