@@ -3,7 +3,7 @@
 import { initializeApp, getApp, getApps, App } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getAdminApp } from './firebase-admin';
+
 
 // Your web app's Firebase configuration
 const firebaseConfig = {

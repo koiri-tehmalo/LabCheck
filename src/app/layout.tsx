@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getUser, signOut } from '@/lib/actions';
+import { getAdminApp } from '@/lib/firebase-admin';
+
+getAdminApp();
 
 export const metadata: Metadata = {
   title: 'Asset Tracker',
@@ -41,11 +44,6 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
       <body className="font-body antialiased bg-background">
         <SidebarProvider>
           <div className="flex min-h-screen">

@@ -1,36 +1,36 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { auth } from 'firebase-admin';
-import { cookies } from 'next/headers';
-import { getAdminApp } from './lib/firebase-admin';
 
 export async function middleware(request: NextRequest) {
-  const session = request.cookies.get('session')?.value || '';
+  const session = request.cookies.get('session')?.value;
+  const isLoginPage = request.nextUrl.pathname === '/login';
+  const isApiAuthRoute = request.nextUrl.pathname === '/api/auth';
 
-  //If no session cookie is present, redirect to login.
-  if (!session) {
-    if (request.nextUrl.pathname === '/login') {
-      return NextResponse.next();
+  // Allow auth API route to be accessed
+  if (isApiAuthRoute) {
+    return NextResponse.next();
+  }
+
+  // If on the login page
+  if (isLoginPage) {
+    // If user is already logged in, redirect to home
+    if (session) {
+      return NextResponse.redirect(new URL('/', request.url));
     }
+    // Otherwise, show the login page
+    return NextResponse.next();
+  }
+
+  // For all other pages, if there is no session, redirect to login
+  if (!session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  //Verify the session cookie. In case the session cookie is invalid, redirect to login.
-  try {
-     getAdminApp();
-    await auth().verifySessionCookie(session, true);
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  
-  if (request.nextUrl.pathname === '/login') {
-     return NextResponse.redirect(new URL('/', request.url));
-  }
-  
+  // If there is a session, allow access
   return NextResponse.next();
 }
 
 //Add your protected routes
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
