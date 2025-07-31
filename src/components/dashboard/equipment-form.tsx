@@ -76,6 +76,7 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...defaultValues,
+      notes: defaultValues?.notes || '',
       purchaseDate: defaultValues?.purchaseDate ? new Date(defaultValues.purchaseDate) : new Date(),
     },
   })
