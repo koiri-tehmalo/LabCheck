@@ -19,13 +19,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { EquipmentItem } from '@/lib/types';
 import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-
-function DeleteConfirmation({ item }: { item: EquipmentItem }) {
+function DeleteConfirmation({ itemId }: { itemId: string }) {
     const router = useRouter();
     const { toast } = useToast();
+    const [item, setItem] = useState<EquipmentItem | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getEquipmentItemById(itemId).then(data => {
+            setItem(data);
+            setLoading(false);
+        });
+    }, [itemId]);
 
     const handleDelete = async () => {
+        if (!item) return;
         try {
             await deleteEquipment(item.id);
             toast({
@@ -42,6 +52,42 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
             });
         }
     };
+    
+    if (loading) {
+        return (
+             <Card className="border-destructive">
+                <CardHeader className="text-center">
+                     <div className="mx-auto bg-destructive/10 p-3 rounded-full w-fit">
+                        <AlertTriangle className="h-8 w-8 text-destructive" />
+                    </div>
+                    <Skeleton className="h-8 w-48 mx-auto" />
+                    <Skeleton className="h-4 w-full max-w-sm mx-auto" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="rounded-md border bg-muted/50 p-4 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-4 w-1/3" />
+                    </div>
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (!item) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Error</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>Equipment not found. It may have already been deleted.</p>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card className="border-destructive">
@@ -79,8 +125,9 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-                <Button variant="outline" className="w-full" onClick={() => router.back()}>Cancel</Button>
-
+                <Button variant="outline" className="w-full" asChild>
+                    <Link href="/dashboard/equipment">Cancel</Link>
+                </Button>
             </CardContent>
         </Card>
     );
@@ -88,25 +135,6 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
 
 
 export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
-  const [item, setItem] = useState<EquipmentItem | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getEquipmentItemById(params.id).then(item => {
-        setItem(item)
-        setLoading(false);
-    });
-  }, [params.id]);
-
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!item) {
-    return <div>Equipment not found.</div>;
-  }
-
   return (
     <>
       <div className="max-w-2xl mx-auto">
@@ -118,7 +146,7 @@ export default function DeleteEquipmentPage({ params }: { params: { id: string }
             </Link>
           </Button>
         </div>
-        <DeleteConfirmation item={item} />
+        <DeleteConfirmation itemId={params.id} />
       </div>
     </>
   );
