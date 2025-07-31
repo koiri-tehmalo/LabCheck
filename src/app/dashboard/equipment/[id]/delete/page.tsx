@@ -60,10 +60,27 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
                     <p><strong>หมายเลขครุภัณฑ์:</strong> {item.assetId}</p>
                     <p><strong>Model:</strong> {item.model}</p>
                 </div>
-                <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDelete}>Delete Asset</Button>
-                </div>
+                
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button variant="destructive" className="w-full">Delete Asset</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the
+                            equipment item from the database.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <Button variant="outline" className="w-full" onClick={() => router.back()}>Cancel</Button>
+
             </CardContent>
         </Card>
     );
@@ -72,14 +89,22 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
 
 export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
   const [item, setItem] = useState<EquipmentItem | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getEquipmentItemById(params.id).then(setItem);
+    getEquipmentItemById(params.id).then(item => {
+        setItem(item)
+        setLoading(false);
+    });
   }, [params.id]);
 
 
-  if (!item) {
+  if (loading) {
     return <div>Loading...</div>;
+  }
+  
+  if (!item) {
+    return <div>Equipment not found.</div>;
   }
 
   return (
