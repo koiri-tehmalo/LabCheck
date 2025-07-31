@@ -10,6 +10,7 @@ import type { EquipmentItem, EquipmentSet, User } from './types';
 import { auth } from 'firebase-admin';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import { getAdminApp } from './firebase-admin';
 
 // Schema for form validation
 const equipmentFormSchema = z.object({
@@ -231,6 +232,7 @@ export async function saveEquipmentSet(formData: FormData) {
 }
 
 export const getUser = cache(async (): Promise<User | null> => {
+    getAdminApp()
   const sessionCookie = cookies().get('session')?.value;
   if (!sessionCookie) {
     return null;
@@ -255,6 +257,7 @@ export const getUser = cache(async (): Promise<User | null> => {
 
 export async function getUsers(): Promise<User[]> {
     try {
+        getAdminApp();
         const userRecords = await auth().listUsers();
         return userRecords.users.map(user => ({
             id: user.uid,

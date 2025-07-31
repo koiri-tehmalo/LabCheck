@@ -5,9 +5,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import StyledFirebaseAuth from '@/lib/firebaseui';
 import uiConfig from '@/lib/firebaseui.config';
 import { HardDrive } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const StyledFirebaseAuth = dynamic(
+  () => import('@/lib/firebaseui'),
+  { ssr: false }
+);
 
 export default function LoginPage() {
   const router = useRouter();
