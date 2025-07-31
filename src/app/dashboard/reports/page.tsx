@@ -1,46 +1,55 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ServerCrash } from 'lucide-react';
-import { getEquipmentItems } from '@/lib/actions';
+import { getEquipmentItems, getSetOptions } from '@/lib/actions';
 import * as XLSX from 'xlsx';
 import type { EquipmentItem } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StatusBadge } from '@/components/dashboard/status-badge';
 
 export default function ReportsPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
+  const [setOptions, setSetOptions] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchEquipment() {
+    async function fetchData() {
       try {
-        const items = await getEquipmentItems();
+        const itemsPromise = getEquipmentItems();
+        const setsPromise = getSetOptions();
+        const [items, sets] = await Promise.all([itemsPromise, setsPromise]);
         setEquipment(items);
+        setSetOptions(sets);
       } catch (e) {
-        setError('Failed to load equipment data.');
+        setError('Failed to load data.');
         console.error(e);
       } finally {
         setLoading(false);
       }
     }
-    fetchEquipment();
+    fetchData();
   }, []);
 
   const handleExport = () => {
     if (equipment.length === 0) return;
 
+    const setMap = new Map(setOptions.map(set => [set.id, set.name]));
+
     const dataToExport = equipment.map(item => ({
-      'Asset ID': item.id,
+      'หมายเลขครุภัณฑ์': item.assetId,
       'Name': item.name,
       'Model': item.model,
       'Status': item.status,
       'Location': item.location,
       'Purchase Date': new Date(item.purchaseDate).toLocaleDateString(),
-      'Set ID': item.setId || 'N/A',
+      'Equipment Set': item.setId ? setMap.get(item.setId) || 'N/A' : 'N/A',
       'Notes': item.notes || ''
     }));
 
@@ -49,13 +58,13 @@ export default function ReportsPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Equipment Report");
 
     const columnWidths = [
-      { wch: 15 }, // Asset ID
+      { wch: 20 }, // หมายเลขครุภัณฑ์
       { wch: 25 }, // Name
       { wch: 20 }, // Model
       { wch: 10 }, // Status
       { wch: 20 }, // Location
       { wch: 15 }, // Purchase Date
-      { wch: 10 }, // Set ID
+      { wch: 20 }, // Equipment Set
       { wch: 40 }, // Notes
     ];
     worksheet['!cols'] = columnWidths;
@@ -110,6 +119,56 @@ export default function ReportsPage() {
           )}
         </CardContent>
       </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Equipment Data Preview</CardTitle>
+          <CardDescription>Showing the 10 most recently added items.</CardDescription>
+        </CardHeader>
+        <CardContent>
+           <div className="rounded-lg border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>หมายเลขครุภัณฑ์</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Purchase Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading && Array.from({ length: 5 }).map((_, i) => (
+                             <TableRow key={i}>
+                                <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                                <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[90px]" /></TableCell>
+                             </TableRow>
+                        ))}
+                        {!loading && equipment.slice(0, 10).map((item) => (
+                            <TableRow key={item.id}>
+                                <TableCell className="font-medium">{item.assetId}</TableCell>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell><StatusBadge status={item.status} /></TableCell>
+                                <TableCell>{item.location}</TableCell>
+                                <TableCell>{new Date(item.purchaseDate).toLocaleDateString()}</TableCell>
+                            </TableRow>
+                        ))}
+                         {!loading && equipment.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    No equipment found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
