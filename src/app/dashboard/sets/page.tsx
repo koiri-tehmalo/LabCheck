@@ -6,9 +6,9 @@ import { PlusCircle } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { getEquipmentSets } from "@/lib/actions";
+import { getEquipmentSets, getUser } from "@/lib/actions";
 import { useEffect, useState } from "react";
-import type { EquipmentSet } from "@/lib/types";
+import type { EquipmentSet, User } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -24,21 +24,26 @@ export default function SetsPage() {
   const [sets, setSets] = useState<EquipmentSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const fetchSets = async () => {
+
+  const fetchSetsAndUser = async () => {
     setLoading(true);
-    const items = await getEquipmentSets();
+    const itemsPromise = getEquipmentSets();
+    const userPromise = getUser();
+    const [items, userData] = await Promise.all([itemsPromise, userPromise]);
     setSets(items);
+    setUser(userData);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchSets();
+    fetchSetsAndUser();
   }, []);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
-    fetchSets(); // Refresh data
+    fetchSetsAndUser(); // Refresh data
   };
 
   return (
@@ -48,23 +53,25 @@ export default function SetsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Equipment Sets</h1>
           <p className="text-muted-foreground">Manage groups of related equipment.</p>
         </div>
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Set
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[625px]">
-            <DialogHeader>
-              <DialogTitle>Create New Equipment Set</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to create a new equipment set.
-              </DialogDescription>
-            </DialogHeader>
-            <SetForm onSuccess={handleSuccess} />
-          </DialogContent>
-        </Dialog>
+        {user?.role === 'admin' && (
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Set
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[625px]">
+                <DialogHeader>
+                <DialogTitle>Create New Equipment Set</DialogTitle>
+                <DialogDescription>
+                    Fill out the form below to create a new equipment set.
+                </DialogDescription>
+                </DialogHeader>
+                <SetForm onSuccess={handleSuccess} />
+            </DialogContent>
+            </Dialog>
+        )}
       </div>
 
       {loading ? (

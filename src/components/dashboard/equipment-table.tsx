@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2, QrCode } from 'lucide-react';
-import type { EquipmentItem } from '@/lib/types';
+import type { EquipmentItem, User } from '@/lib/types';
 import { StatusBadge } from './status-badge';
 import Link from 'next/link';
 import {
@@ -33,9 +33,10 @@ import { EquipmentForm } from "@/components/dashboard/equipment-form";
 type EquipmentTableProps = {
   data: EquipmentItem[];
   onDataChange: () => void;
+  user: User | null;
 };
 
-export function EquipmentTable({ data, onDataChange }: EquipmentTableProps) {
+export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<EquipmentItem | null>(null);
 
@@ -54,6 +55,8 @@ export function EquipmentTable({ data, onDataChange }: EquipmentTableProps) {
       setIsModalOpen(false);
       setEditingItem(null);
   }
+
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -98,14 +101,18 @@ export function EquipmentTable({ data, onDataChange }: EquipmentTableProps) {
                           <QrCode className="mr-2 h-4 w-4" /> View Details & QR
                          </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditClick(item)} className="flex items-center">
-                        <Pencil className="mr-2 h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/equipment/${item.id}/delete`} className="flex items-center text-destructive focus:text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </Link>
-                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <>
+                          <DropdownMenuItem onClick={() => handleEditClick(item)} className="flex items-center">
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/equipment/${item.id}/delete`} className="flex items-center text-destructive focus:text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

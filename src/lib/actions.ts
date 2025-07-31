@@ -89,7 +89,7 @@ export async function saveEquipment(formData: FormData) {
     const dataToSave = {
         ...validatedFields.data,
         notes: validatedFields.data.notes || '',
-        setId: validatedFields.data.setId || ''
+        setId: validatedFields.data.setId === 'none' ? '' : validatedFields.data.setId,
     };
 
 
@@ -125,7 +125,7 @@ export async function updateEquipment(id: string, formData: FormData) {
     const dataToUpdate = {
         ...validatedFields.data,
         notes: validatedFields.data.notes || '',
-        setId: validatedFields.data.setId || ''
+        setId: validatedFields.data.setId === 'none' ? '' : validatedFields.data.setId
     };
     
     try {
@@ -228,12 +228,14 @@ export async function saveEquipmentSet(formData: FormData) {
 }
 
 
-export async function getUser(): Promise<User> {
+export async function getUser(): Promise<User | null> {
     // This is a mock user. In a real app, you'd use Firebase Auth.
+    // To test different roles, change 'admin' to 'auditor' or return null for a guest user.
     return {
-        name: 'Guest User',
-        email: 'guest@example.com',
+        name: 'Admin User',
+        email: 'admin@example.com',
         avatar: 'https://placehold.co/100x100.png',
+        role: 'admin',
     };
 }
 

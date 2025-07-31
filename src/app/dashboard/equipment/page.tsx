@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
 import { EquipmentTable } from "@/components/dashboard/equipment-table";
-import { getEquipmentItems } from "@/lib/actions";
+import { getEquipmentItems, getUser } from "@/lib/actions";
 import { useState, useEffect } from "react";
-import type { EquipmentItem } from "@/lib/types";
+import type { EquipmentItem, User } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -22,21 +22,25 @@ export default function EquipmentPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const fetchEquipment = async () => {
+  const fetchEquipmentAndUser = async () => {
     setLoading(true);
-    const items = await getEquipmentItems();
+    const itemsPromise = getEquipmentItems();
+    const userPromise = getUser();
+    const [items, userData] = await Promise.all([itemsPromise, userPromise]);
     setEquipment(items);
+    setUser(userData);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchEquipment();
+    fetchEquipmentAndUser();
   }, []);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
-    fetchEquipment(); // Refresh data
+    fetchEquipmentAndUser(); // Refresh data
   };
 
   return (
@@ -51,26 +55,28 @@ export default function EquipmentPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search equipment..." className="pl-10" />
         </div>
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Equipment
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[625px]">
-            <DialogHeader>
-              <DialogTitle>เพิ่มครุภัณฑ์ชิ่นใหม่</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to add a new asset to the inventory.
-              </DialogDescription>
-            </DialogHeader>
-            <EquipmentForm onSuccess={handleSuccess} />
-          </DialogContent>
-        </Dialog>
+        {user?.role === 'admin' && (
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Equipment
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[625px]">
+              <DialogHeader>
+                <DialogTitle>เพิ่มครุภัณฑ์ชิ่นใหม่</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to add a new asset to the inventory.
+                </DialogDescription>
+              </DialogHeader>
+              <EquipmentForm onSuccess={handleSuccess} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
       
-      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={equipment} onDataChange={fetchEquipment} />}
+      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={equipment} onDataChange={fetchEquipmentAndUser} user={user} />}
     </div>
   );
 }

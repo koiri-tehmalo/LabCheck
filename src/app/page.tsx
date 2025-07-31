@@ -40,24 +40,26 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Welcome Section */}
-      <Card className="bg-primary text-primary-foreground">
-        <CardContent className="p-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold">Welcome, {user?.name ?? '...'}!</h2>
-            <p className="opacity-80">
-              {new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-              })}
-            </p>
-          </div>
-          <div className="p-3 bg-primary-foreground/20 rounded-lg">
-            <HardDrive className="h-8 w-8 text-white" />
-          </div>
-        </CardContent>
-      </Card>
+      {user && (
+        <Card className="bg-primary text-primary-foreground">
+          <CardContent className="p-6 flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">Welcome, {user.name}!</h2>
+              <p className="opacity-80">
+                {new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  weekday: 'long'
+                })}
+              </p>
+            </div>
+            <div className="p-3 bg-primary-foreground/20 rounded-lg">
+              <HardDrive className="h-8 w-8 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {stats.error && (
          <Alert variant="destructive">
@@ -176,7 +178,7 @@ export default async function DashboardPage() {
                                             <Link href={`/dashboard/equipment/${item.id}`} className="font-medium hover:underline">
                                                 {item.name}
                                             </Link>
-                                            <div className="text-xs text-muted-foreground">{item.id}</div>
+                                            <div className="text-xs text-muted-foreground">{item.assetId}</div>
                                         </td>
                                         <td className="py-2">{new Date(item.purchaseDate).toLocaleDateString()}</td>
                                         <td className="py-2 text-right"><StatusBadge status={item.status} /></td>

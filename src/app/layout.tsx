@@ -21,6 +21,7 @@ import {
   Component,
   FileText,
   LogOut,
+  LogIn
 } from 'lucide-react';
 import Link from 'next/link';
 import { getUser } from '@/lib/actions';
@@ -93,25 +94,27 @@ export default async function RootLayout({
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarContent>
-              <SidebarFooter className="p-4 border-t border-sidebar-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col text-sm truncate">
-                      <span className="font-semibold text-sidebar-foreground">{user.name}</span>
-                      <span className="text-muted-foreground text-xs">{user.email}</span>
+              {user && (
+                <SidebarFooter className="p-4 border-t border-sidebar-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col text-sm truncate">
+                        <span className="font-semibold text-sidebar-foreground">{user.name}</span>
+                        <span className="text-muted-foreground text-xs">{user.email}</span>
+                      </div>
                     </div>
+                    <Button asChild variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                      <Link href="/login">
+                        <LogOut className="h-4 w-4" />
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                    <Link href="/login">
-                      <LogOut className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </SidebarFooter>
+                </SidebarFooter>
+              )}
             </Sidebar>
             <div className="flex-1 flex flex-col">
               <header className="p-4 md:hidden flex items-center justify-start border-b">
