@@ -9,7 +9,7 @@ import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, 
 import type { EquipmentItem, EquipmentSet, User } from './types';
 
 // Schema for form validation
-const formSchema = z.object({
+const equipmentFormSchema = z.object({
   assetId: z.string().min(1, { message: "Asset ID is required." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   model: z.string().min(2, { message: "Model must be at least 2 characters." }),
@@ -19,6 +19,12 @@ const formSchema = z.object({
   notes: z.string().optional(),
   setId: z.string().optional(),
 });
+
+const setFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  location: z.string().min(2, "Location is required."),
+});
+
 
 // Helper to convert Firestore snapshot to EquipmentItem
 const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
@@ -62,7 +68,7 @@ export async function getEquipmentItemById(id: string): Promise<EquipmentItem | 
 
 
 export async function saveEquipment(formData: FormData) {
-    const validatedFields = formSchema.safeParse({
+    const rawData = {
         assetId: formData.get('assetId'),
         name: formData.get('name'),
         model: formData.get('model'),
@@ -71,7 +77,9 @@ export async function saveEquipment(formData: FormData) {
         purchaseDate: new Date(formData.get('purchaseDate') as string),
         notes: formData.get('notes'),
         setId: formData.get('setId') === 'none' ? '' : formData.get('setId'),
-    });
+    };
+    
+    const validatedFields = equipmentFormSchema.safeParse(rawData);
 
     if (!validatedFields.success) {
         console.error('Validation errors:', validatedFields.error.flatten().fieldErrors);
@@ -79,12 +87,7 @@ export async function saveEquipment(formData: FormData) {
     }
 
     try {
-        const dataToSave = {
-            ...validatedFields.data,
-            notes: validatedFields.data.notes || '',
-            setId: validatedFields.data.setId || '',
-        };
-        await addDoc(collection(db, "equipment"), dataToSave);
+        await addDoc(collection(db, "equipment"), validatedFields.data);
     } catch (error: any) {
         console.error('Firestore Error saving equipment:', error.message);
         throw new Error('Failed to create equipment item.');
@@ -95,7 +98,7 @@ export async function saveEquipment(formData: FormData) {
 }
 
 export async function updateEquipment(id: string, formData: FormData) {
-     const validatedFields = formSchema.safeParse({
+     const validatedFields = equipmentFormSchema.safeParse({
         assetId: formData.get('assetId'),
         name: formData.get('name'),
         model: formData.get('model'),
@@ -113,12 +116,7 @@ export async function updateEquipment(id: string, formData: FormData) {
     
     try {
         const docRef = doc(db, "equipment", id);
-        const dataToUpdate = {
-            ...validatedFields.data,
-            notes: validatedFields.data.notes || '',
-            setId: validatedFields.data.setId || '',
-        };
-        await updateDoc(docRef, dataToUpdate as any);
+        await updateDoc(docRef, validatedFields.data as any);
     } catch (error: any) {
         console.error('Firestore Error updating equipment:', error.message);
         throw new Error('Failed to update equipment item.');
@@ -193,6 +191,28 @@ export async function getEquipmentSets(): Promise<EquipmentSet[]> {
         console.error('Firestore Error getting equipment sets:', error.message);
         return [];
     }
+}
+
+export async function saveEquipmentSet(formData: FormData) {
+    const validatedFields = setFormSchema.safeParse({
+        name: formData.get('name'),
+        location: formData.get('location'),
+    });
+
+    if (!validatedFields.success) {
+        console.error('Validation errors:', validatedFields.error.flatten().fieldErrors);
+        throw new Error("Validation failed");
+    }
+
+    try {
+        await addDoc(collection(db, "equipment_sets"), validatedFields.data);
+    } catch (error: any) {
+        console.error('Firestore Error saving equipment set:', error.message);
+        throw new Error('Failed to create equipment set.');
+    }
+
+    revalidatePath('/dashboard/sets');
+    redirect('/dashboard/sets');
 }
 
 

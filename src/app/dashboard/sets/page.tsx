@@ -16,9 +16,11 @@ export default async function SetsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Equipment Sets</h1>
           <p className="text-muted-foreground">Manage groups of related equipment.</p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Set
+        <Button asChild>
+          <Link href="/dashboard/sets/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create New Set
+          </Link>
         </Button>
       </div>
 
@@ -32,7 +34,7 @@ export default async function SetsPage() {
             <CardContent className="space-y-4">
               <h4 className="text-sm font-medium">Items in this set:</h4>
               <Separator />
-               {set.items.length > 0 ? (
+               {set.items && set.items.length > 0 ? (
                 <ul className="space-y-3">
                   {set.items.map(item => (
                     <li key={item.id} className="flex justify-between items-center text-sm">

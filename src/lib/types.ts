@@ -21,6 +21,6 @@ export type EquipmentItem = {
 export type EquipmentSet = {
   id: string;
   name: string;
-  items: EquipmentItem[];
+  items?: EquipmentItem[];
   location: string;
 };
