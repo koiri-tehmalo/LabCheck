@@ -18,7 +18,7 @@ import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { EquipmentItem } from '@/lib/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function DeleteConfirmation({ itemId }: { itemId: string }) {
@@ -135,6 +135,7 @@ function DeleteConfirmation({ itemId }: { itemId: string }) {
 
 
 export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
+  const resolvedParams = use(params);
   return (
     <>
       <div className="max-w-2xl mx-auto">
@@ -146,7 +147,7 @@ export default function DeleteEquipmentPage({ params }: { params: { id: string }
             </Link>
           </Button>
         </div>
-        <DeleteConfirmation itemId={params.id} />
+        <DeleteConfirmation itemId={resolvedParams.id} />
       </div>
     </>
   );
