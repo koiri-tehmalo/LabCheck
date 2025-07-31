@@ -1,57 +1,67 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, ServerCrash } from 'lucide-react';
 import { getEquipmentItems } from '@/lib/actions';
 import * as XLSX from 'xlsx';
 import type { EquipmentItem } from '@/lib/types';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
+export default function ReportsPage() {
+  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-function ExportButton({ equipment }: { equipment: EquipmentItem[] }) {
-    'use client';
-    const handleExport = () => {
-        if (equipment.length === 0) return;
+  useEffect(() => {
+    async function fetchEquipment() {
+      try {
+        const items = await getEquipmentItems();
+        setEquipment(items);
+      } catch (e) {
+        setError('Failed to load equipment data.');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchEquipment();
+  }, []);
 
-        const dataToExport = equipment.map(item => ({
-            'Asset ID': item.id,
-            'Name': item.name,
-            'Model': item.model,
-            'Status': item.status,
-            'Location': item.location,
-            'Purchase Date': new Date(item.purchaseDate).toLocaleDateString(),
-            'Set ID': item.setId || 'N/A',
-            'Notes': item.notes || ''
-        }));
+  const handleExport = () => {
+    if (equipment.length === 0) return;
 
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Equipment Report");
+    const dataToExport = equipment.map(item => ({
+      'Asset ID': item.id,
+      'Name': item.name,
+      'Model': item.model,
+      'Status': item.status,
+      'Location': item.location,
+      'Purchase Date': new Date(item.purchaseDate).toLocaleDateString(),
+      'Set ID': item.setId || 'N/A',
+      'Notes': item.notes || ''
+    }));
 
-        const columnWidths = [
-            { wch: 15 }, // Asset ID
-            { wch: 25 }, // Name
-            { wch: 20 }, // Model
-            { wch: 10 }, // Status
-            { wch: 20 }, // Location
-            { wch: 15 }, // Purchase Date
-            { wch: 10 }, // Set ID
-            { wch: 40 }, // Notes
-        ];
-        worksheet['!cols'] = columnWidths;
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Equipment Report");
 
-        XLSX.writeFile(workbook, "Equipment_Report.xlsx");
-    };
-    
-    return (
-        <Button onClick={handleExport} disabled={equipment.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export to Excel
-        </Button>
-    )
+    const columnWidths = [
+      { wch: 15 }, // Asset ID
+      { wch: 25 }, // Name
+      { wch: 20 }, // Model
+      { wch: 10 }, // Status
+      { wch: 20 }, // Location
+      { wch: 15 }, // Purchase Date
+      { wch: 10 }, // Set ID
+      { wch: 40 }, // Notes
+    ];
+    worksheet['!cols'] = columnWidths;
 
-}
-
-export default async function ReportsPage() {
-  const equipment = await getEquipmentItems();
+    XLSX.writeFile(workbook, "Equipment_Report.xlsx");
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -65,21 +75,39 @@ export default async function ReportsPage() {
           <div className="flex items-center justify-between">
             <div className='flex items-center gap-3'>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <FileText className="h-6 w-6 text-primary" />
+                <FileText className="h-6 w-6 text-primary" />
               </div>
               <div>
-                  <CardTitle>Inventory Report</CardTitle>
-                  <CardDescription>Export a complete list of all equipment assets.</CardDescription>
+                <CardTitle>Inventory Report</CardTitle>
+                <CardDescription>Export a complete list of all equipment assets.</CardDescription>
               </div>
             </div>
-            <ExportButton equipment={equipment} />
+            <Button onClick={handleExport} disabled={equipment.length === 0 || loading}>
+              <Download className="mr-2 h-4 w-4" />
+              Export to Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Click the button above to download the full equipment inventory report as an .xlsx file. 
-            This file can be opened with Microsoft Excel, Google Sheets, or other spreadsheet software.
-          </p>
+          {loading && (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          )}
+          {error && (
+            <Alert variant="destructive">
+              <ServerCrash className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {!loading && !error && (
+            <p className="text-sm text-muted-foreground">
+              Click the button above to download the full equipment inventory report as an .xlsx file.
+              This file can be opened with Microsoft Excel, Google Sheets, or other spreadsheet software.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
