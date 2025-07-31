@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import { EquipmentForm } from "@/components/dashboard/equipment-form";
 export default function EquipmentPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const fetchEquipment = async () => {
     setLoading(true);
@@ -34,7 +35,7 @@ export default function EquipmentPage() {
   }, []);
 
   const handleSuccess = () => {
-    setIsModalOpen(false);
+    setIsAddModalOpen(false);
     fetchEquipment(); // Refresh data
   };
 
@@ -50,7 +51,7 @@ export default function EquipmentPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search equipment..." className="pl-10" />
         </div>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -69,8 +70,7 @@ export default function EquipmentPage() {
         </Dialog>
       </div>
       
-      {/* Add a loading state for the table */}
-      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={equipment} />}
+      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={equipment} onDataChange={fetchEquipment} />}
     </div>
   );
 }

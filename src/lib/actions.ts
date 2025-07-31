@@ -75,8 +75,8 @@ export async function saveEquipment(formData: FormData) {
         status: formData.get('status'),
         location: formData.get('location'),
         purchaseDate: new Date(formData.get('purchaseDate') as string),
-        notes: formData.get('notes') || '',
-        setId: formData.get('setId') || '',
+        notes: formData.get('notes'),
+        setId: formData.get('setId'),
     };
     
     const validatedFields = equipmentFormSchema.safeParse(rawData);
@@ -85,9 +85,16 @@ export async function saveEquipment(formData: FormData) {
         console.error('Validation errors:', validatedFields.error.flatten().fieldErrors);
         throw new Error("Validation failed");
     }
+    
+    const dataToSave = {
+        ...validatedFields.data,
+        notes: validatedFields.data.notes || '',
+        setId: validatedFields.data.setId || ''
+    };
+
 
     try {
-        await addDoc(collection(db, "equipment"), validatedFields.data);
+        await addDoc(collection(db, "equipment"), dataToSave);
     } catch (error: any) {
         console.error('Firestore Error saving equipment:', error.message);
         throw new Error('Failed to create equipment item.');
@@ -97,25 +104,33 @@ export async function saveEquipment(formData: FormData) {
 }
 
 export async function updateEquipment(id: string, formData: FormData) {
-     const validatedFields = equipmentFormSchema.safeParse({
+     const rawData = {
         assetId: formData.get('assetId'),
         name: formData.get('name'),
         model: formData.get('model'),
         status: formData.get('status'),
         location: formData.get('location'),
         purchaseDate: new Date(formData.get('purchaseDate') as string),
-        notes: formData.get('notes') || '',
-        setId: formData.get('setId') || '',
-    });
+        notes: formData.get('notes'),
+        setId: formData.get('setId'),
+    };
+
+     const validatedFields = equipmentFormSchema.safeParse(rawData);
 
     if (!validatedFields.success) {
        console.error('Validation errors:', validatedFields.error.flatten().fieldErrors);
        throw new Error("Validation failed");
     }
     
+    const dataToUpdate = {
+        ...validatedFields.data,
+        notes: validatedFields.data.notes || '',
+        setId: validatedFields.data.setId || ''
+    };
+    
     try {
         const docRef = doc(db, "equipment", id);
-        await updateDoc(docRef, validatedFields.data as any);
+        await updateDoc(docRef, dataToUpdate as any);
     } catch (error: any) {
         console.error('Firestore Error updating equipment:', error.message);
         throw new Error('Failed to update equipment item.');
@@ -123,7 +138,6 @@ export async function updateEquipment(id: string, formData: FormData) {
 
     revalidatePath('/dashboard/equipment');
     revalidatePath(`/dashboard/equipment/${id}`);
-    redirect('/dashboard/equipment');
 }
 
 export async function deleteEquipment(id: string) {

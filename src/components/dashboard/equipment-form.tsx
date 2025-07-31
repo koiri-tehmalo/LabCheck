@@ -32,7 +32,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentItem } from "@/lib/types"
 import { getSetOptions, saveEquipment, updateEquipment } from "@/lib/actions"
@@ -62,7 +61,6 @@ interface EquipmentFormProps {
 }
 
 export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: EquipmentFormProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [setOptions, setSetOptions] = useState<{ id: string, name: string }[]>([]);
 
@@ -91,13 +89,14 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
   async function onSubmit(values: EquipmentFormValues) {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        if (value instanceof Date) {
-          formData.append(key, value.toISOString());
-        } else {
-          formData.append(key, value as string);
+        // Append all values, even empty strings, but exclude null/undefined
+        if (value !== null && value !== undefined) {
+             if (value instanceof Date) {
+                formData.append(key, value.toISOString());
+            } else {
+                formData.append(key, value as string);
+            }
         }
-      }
     });
 
     try {
@@ -116,9 +115,6 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
       }
       if (onSuccess) {
         onSuccess();
-      } else {
-         // Fallback for edit page
-         router.push('/dashboard/equipment');
       }
     } catch (error) {
       toast({
@@ -254,7 +250,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Equipment Set (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a set" />
@@ -295,7 +291,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
           </div>
         </div>
         <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => (onSuccess ? onSuccess() : router.back())}>
+            <Button type="button" variant="outline" onClick={onSuccess}>
                 Cancel
             </Button>
             <Button type="submit">{isEditing ? 'Save Changes' : 'Add Equipment'}</Button>
