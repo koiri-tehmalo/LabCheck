@@ -91,8 +91,8 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
                 <CardContent>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <p className="font-medium text-muted-foreground">Asset ID</p>
-                            <p>{item.id}</p>
+                            <p className="font-medium text-muted-foreground">หมายเลขครุภัณฑ์</p>
+                            <p>{item.assetId}</p>
                         </div>
                         <div>
                             <p className="font-medium text-muted-foreground">Location</p>
@@ -108,6 +108,10 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
                                 <p>{item.setId}</p>
                             </div>
                         )}
+                         <div>
+                            <p className="font-medium text-muted-foreground">Document ID</p>
+                            <p className="text-xs font-mono">{item.id}</p>
+                        </div>
                     </div>
                     {item.notes && (
                          <div className="mt-6">

@@ -56,7 +56,7 @@ function DeleteConfirmation({ item }: { item: EquipmentItem }) {
             <CardContent className="space-y-4">
                 <div className="rounded-md border bg-muted/50 p-4 text-sm">
                     <p><strong>Asset Name:</strong> {item.name}</p>
-                    <p><strong>Asset ID:</strong> {item.id}</p>
+                    <p><strong>หมายเลขครุภัณฑ์:</strong> {item.assetId}</p>
                     <p><strong>Model:</strong> {item.model}</p>
                 </div>
                 <div className="flex justify-end gap-2">

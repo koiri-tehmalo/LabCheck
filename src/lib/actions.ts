@@ -10,7 +10,7 @@ import type { EquipmentItem, EquipmentSet, User } from './types';
 
 // Schema for form validation
 const formSchema = z.object({
-  id: z.string().optional(),
+  assetId: z.string().min(1, { message: "Asset ID is required." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   model: z.string().min(2, { message: "Model must be at least 2 characters." }),
   status: z.enum(["usable", "broken", "lost"]),
@@ -24,11 +24,12 @@ const formSchema = z.object({
 const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
     const data = snapshot.data();
     return {
-        ...data,
         id: snapshot.id,
-        // Convert Firestore Timestamp to ISO string
+        // The rest of the data from Firestore
+        ...data,
+        // Convert Firestore Timestamp to ISO string for client-side usage
         purchaseDate: data.purchaseDate.toDate().toISOString(),
-    };
+    } as EquipmentItem;
 };
 
 export async function getEquipmentItems(): Promise<EquipmentItem[]> {
@@ -62,12 +63,13 @@ export async function getEquipmentItemById(id: string): Promise<EquipmentItem | 
 
 export async function saveEquipment(formData: FormData) {
     const validatedFields = formSchema.safeParse({
+        assetId: formData.get('assetId'),
         name: formData.get('name'),
         model: formData.get('model'),
         status: formData.get('status'),
         location: formData.get('location'),
         purchaseDate: new Date(formData.get('purchaseDate') as string),
-        notes: formData.get('notes') || '',
+        notes: formData.get('notes'),
         setId: formData.get('setId') === 'none' ? '' : formData.get('setId'),
     });
 
@@ -94,6 +96,7 @@ export async function saveEquipment(formData: FormData) {
 
 export async function updateEquipment(id: string, formData: FormData) {
      const validatedFields = formSchema.safeParse({
+        assetId: formData.get('assetId'),
         name: formData.get('name'),
         model: formData.get('model'),
         status: formData.get('status'),
@@ -110,7 +113,12 @@ export async function updateEquipment(id: string, formData: FormData) {
     
     try {
         const docRef = doc(db, "equipment", id);
-        await updateDoc(docRef, validatedFields.data as any);
+        const dataToUpdate = {
+            ...validatedFields.data,
+            notes: validatedFields.data.notes || '',
+            setId: validatedFields.data.setId || '',
+        };
+        await updateDoc(docRef, dataToUpdate as any);
     } catch (error: any) {
         console.error('Firestore Error updating equipment:', error.message);
         throw new Error('Failed to update equipment item.');

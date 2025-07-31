@@ -7,7 +7,8 @@ export type User = {
 export type EquipmentStatus = 'usable' | 'broken' | 'lost';
 
 export type EquipmentItem = {
-  id: string;
+  id: string; // Firestore document ID
+  assetId: string; // User-defined asset ID
   name: string;
   model: string;
   purchaseDate: string; // Stored as ISO string

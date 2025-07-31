@@ -34,11 +34,12 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import type { EquipmentItem, EquipmentStatus } from "@/lib/types"
+import type { EquipmentItem } from "@/lib/types"
 import { getSetOptions, saveEquipment, updateEquipment } from "@/lib/actions"
 import { useEffect, useState } from "react";
 
 const formSchema = z.object({
+  assetId: z.string().min(1, { message: "Asset ID is required." }),
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
@@ -75,6 +76,7 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      assetId: defaultValues?.assetId || '',
       name: defaultValues?.name || '',
       model: defaultValues?.model || '',
       status: defaultValues?.status || 'usable',
@@ -125,6 +127,19 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
+          <FormField
+            control={form.control}
+            name="assetId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>หมายเลขครุภัณฑ์</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., COM-00123" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="name"
