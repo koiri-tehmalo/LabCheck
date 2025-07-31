@@ -6,7 +6,7 @@ export default function NewEquipmentPage() {
     <div className="flex flex-col gap-8">
        <Card>
         <CardHeader>
-          <CardTitle>Add New Equipment</CardTitle>
+          <CardTitle>เพิ่มครุภัณฑ์ชิ่นใหม่</CardTitle>
           <CardDescription>Fill out the form below to add a new asset to the inventory.</CardDescription>
         </CardHeader>
         <CardContent>

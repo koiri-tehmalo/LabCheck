@@ -11,8 +11,8 @@ export default async function EquipmentPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Equipment Inventory</h1>
-        <p className="text-muted-foreground">Manage all your equipment assets.</p>
+        <h1 className="text-3xl font-bold tracking-tight">รายการครุภัณฑ์</h1>
+        <p className="text-muted-foreground">จัดการครุภัณฑ์ทั้งหมดของคุณ.</p>
       </div>
 
       <div className="flex items-center justify-between gap-4">
