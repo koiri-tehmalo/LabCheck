@@ -52,7 +52,7 @@ export default async function RootLayout({
                   <div className="p-1.5 bg-primary rounded-lg text-primary-foreground">
                     <HardDrive className="h-6 w-6" />
                   </div>
-                  <span className="font-bold text-lg text-sidebar-foreground">Asset Tracker</span>
+                  <span className="font-bold text-lg text-sidebar-foreground">LabCheck</span>
                 </div>
                 <SidebarTrigger className="hidden md:flex" />
               </SidebarHeader>
@@ -70,7 +70,7 @@ export default async function RootLayout({
                      <SidebarMenuButton asChild tooltip="Equipment">
                        <Link href="/dashboard/equipment">
                         <HardDrive />
-                        <span>Equipment</span>
+                        <span>รายการครุภัณฑ์</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -78,7 +78,7 @@ export default async function RootLayout({
                      <SidebarMenuButton asChild tooltip="Sets">
                        <Link href="/dashboard/sets">
                             <Component />
-                            <span>Equipment Sets</span>
+                            <span>ชุดครุภัณฑ์</span>
                         </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

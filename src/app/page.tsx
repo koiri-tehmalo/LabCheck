@@ -78,10 +78,10 @@ export default async function DashboardPage() {
                   <table className="w-full text-sm text-left">
                       <thead className="text-xs text-muted-foreground uppercase bg-secondary">
                           <tr>
-                              <th scope="col" className="px-6 py-3">Status</th>
-                              <th scope="col" className="px-6 py-3">Count</th>
-                              <th scope="col" className="px-6 py-3">Description</th>
-                              <th scope="col" className="px-6 py-3 text-center">Icon</th>
+                              <th scope="col" className="px-6 py-3">สถานะ</th>
+                              <th scope="col" className="px-6 py-3">จำนวน</th>
+                              <th scope="col" className="px-6 py-3">คำอธิบาย</th>
+                              <th scope="col" className="px-6 py-3 text-center">สัญลักษณ์</th>
                           </tr>
                       </thead>
                       <tbody>

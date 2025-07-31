@@ -58,9 +58,10 @@ type EquipmentFormValues = z.infer<typeof formSchema>
 interface EquipmentFormProps {
   defaultValues?: Partial<EquipmentItem>;
   isEditing?: boolean;
+  onSuccess?: () => void;
 }
 
-export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFormProps) {
+export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: EquipmentFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [setOptions, setSetOptions] = useState<{ id: string, name: string }[]>([]);
@@ -113,7 +114,12 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
           description: `The equipment "${values.name}" has been successfully saved.`,
         });
       }
-      // Redirect is handled by server action
+      if (onSuccess) {
+        onSuccess();
+      } else {
+         // Fallback for edit page
+         router.push('/dashboard/equipment');
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -248,14 +254,14 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Equipment Set (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
                     <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a set" />
                         </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        <SelectItem value="none">-- No Set --</SelectItem>
+                        <SelectItem value="">-- No Set --</SelectItem>
                         {setOptions.map(option => (
                             <SelectItem key={option.id} value={option.id}>
                                 {option.name} ({option.id})
@@ -289,7 +295,7 @@ export function EquipmentForm({ defaultValues, isEditing = false }: EquipmentFor
           </div>
         </div>
         <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+            <Button type="button" variant="outline" onClick={() => (onSuccess ? onSuccess() : router.back())}>
                 Cancel
             </Button>
             <Button type="submit">{isEditing ? 'Save Changes' : 'Add Equipment'}</Button>
