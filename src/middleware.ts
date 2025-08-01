@@ -6,10 +6,6 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname.startsWith('/login');
 
-  if (!session && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
   if (session && isLoginPage) {
     return NextResponse.redirect(new URL('/', request.url));
   }

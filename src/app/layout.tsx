@@ -26,43 +26,18 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getUser, signOut } from '@/lib/actions';
-import { auth } from 'firebase-admin';
-import { cookies } from 'next/headers';
-import { getAdminApp } from '@/lib/firebase-admin';
-import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Asset Tracker',
   description: 'Manage your equipment with ease.',
 };
 
-async function verifySession() {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) {
-        return null;
-    }
-    try {
-        getAdminApp();
-        const decodedClaims = await auth().verifySessionCookie(sessionCookie, true);
-        return decodedClaims;
-    } catch (error) {
-        return null;
-    }
-}
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await verifySession();
   const user = await getUser();
-
-  if (!session && !user) {
-    // This check is for pages that are not the login page
-    // and should be protected. We can't use middleware for this check
-    // because it runs in the edge runtime.
-  }
 
   return (
     <html lang="en">

@@ -197,6 +197,10 @@ export async function getEquipmentSets(): Promise<EquipmentSet[]> {
         const setsSnapshot = await getDocs(setsCollection);
         const sets = setsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as EquipmentSet[];
 
+        if (sets.length === 0) {
+            return [];
+        }
+
         const allItemsSnapshot = await getDocs(collection(db, "equipment"));
         const allItems = allItemsSnapshot.docs.map(fromSnapshotToEquipmentItem);
 
@@ -232,26 +236,27 @@ export async function saveEquipmentSet(formData: FormData) {
 }
 
 export const getUser = cache(async (): Promise<User | null> => {
-    getAdminApp()
-  const sessionCookie = cookies().get('session')?.value;
-  if (!sessionCookie) {
-    return null;
-  }
-  try {
-    const decodedClaims = await auth().verifySessionCookie(sessionCookie, true);
-    const firebaseUser = await auth().getUser(decodedClaims.uid);
-    
-    return {
-      id: firebaseUser.uid,
-      name: firebaseUser.displayName || 'No Name',
-      email: firebaseUser.email || '',
-      avatar: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-      role: (firebaseUser.customClaims?.role as 'admin' | 'auditor') || 'guest',
-    };
-  } catch (error) {
-    console.error('Error verifying session cookie:', error);
-    return null;
-  }
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) {
+        return null;
+    }
+    try {
+        getAdminApp();
+        const decodedClaims = await auth().verifySessionCookie(sessionCookie, true);
+        const firebaseUser = await auth().getUser(decodedClaims.uid);
+        
+        return {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'No Name',
+          email: firebaseUser.email || '',
+          avatar: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+          role: (firebaseUser.customClaims?.role as 'admin' | 'auditor') || 'guest',
+        };
+    } catch (error) {
+        // This is not a server error, but a client-side error (e.g. invalid cookie)
+        // so we can silently ignore it and return null
+        return null;
+    }
 });
 
 
