@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from './firebase';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId } from 'firebase/firestore';
-import type { EquipmentItem, EquipmentSet, User } from './types';
+import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
 import { auth } from 'firebase-admin';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
@@ -250,7 +250,7 @@ export const getUser = cache(async (): Promise<User | null> => {
           name: firebaseUser.displayName || 'No Name',
           email: firebaseUser.email || '',
           avatar: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-          role: (firebaseUser.customClaims?.role as 'admin' | 'auditor') || 'guest',
+          role: (firebaseUser.customClaims?.role as 'admin' | 'auditor' | 'guest') || 'guest',
         };
     } catch (error) {
         // This is not a server error, but a client-side error (e.g. invalid cookie)
@@ -269,11 +269,31 @@ export async function getUsers(): Promise<User[]> {
             name: user.displayName || 'No Name',
             email: user.email || '',
             avatar: user.photoURL || 'https://placehold.co/100x100.png',
-            role: (user.customClaims?.role as 'admin' | 'auditor') || 'guest',
+            role: (user.customClaims?.role as 'admin' | 'auditor' | 'guest') || 'guest',
         }));
     } catch (error) {
         console.error('Error fetching users:', error);
         return [];
+    }
+}
+
+export async function updateUserRole(userId: string, role: UserRole) {
+    const currentUser = await getUser();
+    if (currentUser?.role !== 'admin') {
+        throw new Error('You do not have permission to perform this action.');
+    }
+    if (currentUser?.id === userId) {
+        throw new Error('Admins cannot change their own role.');
+    }
+
+    try {
+        getAdminApp();
+        await auth().setCustomUserClaims(userId, { role });
+        revalidatePath('/dashboard/users');
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating user role:', error);
+        return { success: false, error: 'Failed to update user role.' };
     }
 }
 
