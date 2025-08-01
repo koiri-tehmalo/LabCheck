@@ -1,4 +1,3 @@
-
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { Auth, onAuthStateChanged } from 'firebase/auth';
@@ -43,7 +42,8 @@ const StyledFirebaseAuth = ({ uiConfig, firebaseAuth, className }: Props) => {
       unregisterAuthObserver();
       firebaseUiWidget.reset();
     };
-  }, [firebaseUiWidget, uiConfig]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseAuth, uiConfig]);
 
   return <div className={className} ref={elementRef} />;
 };
