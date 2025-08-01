@@ -29,6 +29,12 @@ const setFormSchema = z.object({
   location: z.string().min(2, "Location is required."),
 });
 
+const signUpSchema = z.object({
+  name: z.string().min(2, { message: "Name is required." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+});
+
 
 // Helper to convert Firestore snapshot to EquipmentItem
 const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
@@ -253,8 +259,6 @@ export const getUser = cache(async (): Promise<User | null> => {
           role: (firebaseUser.customClaims?.role as 'admin' | 'auditor' | 'guest') || 'guest',
         };
     } catch (error) {
-        // This is not a server error, but a client-side error (e.g. invalid cookie)
-        // so we can silently ignore it and return null
         return null;
     }
 });
@@ -280,10 +284,10 @@ export async function getUsers(): Promise<User[]> {
 export async function updateUserRole(userId: string, role: UserRole) {
     const currentUser = await getUser();
     if (currentUser?.role !== 'admin') {
-        throw new Error('You do not have permission to perform this action.');
+        return { success: false, error: 'You do not have permission to perform this action.' };
     }
     if (currentUser?.id === userId) {
-        throw new Error('Admins cannot change their own role.');
+        return { success: false, error: 'Admins cannot change their own role.' };
     }
 
     try {
@@ -313,4 +317,37 @@ export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
 export async function signOut() {
     cookies().delete('session');
     redirect('/login');
+}
+
+export async function signUp(values: z.infer<typeof signUpSchema>) {
+    const validatedFields = signUpSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+        return { success: false, error: "Invalid fields." };
+    }
+
+    const { email, password, name } = validatedFields.data;
+
+    try {
+        getAdminApp();
+        const userRecord = await auth().createUser({
+            email,
+            password,
+            displayName: name,
+        });
+
+        // Set default role to 'guest'
+        await auth().setCustomUserClaims(userRecord.uid, { role: 'guest' });
+
+        return { success: true, userId: userRecord.uid };
+    } catch (error: any) {
+        console.error("Firebase SignUp Error:", error.code, error.message);
+        let errorMessage = "An unexpected error occurred.";
+        if (error.code === 'auth/email-already-exists') {
+            errorMessage = "This email is already in use by another account.";
+        } else if (error.code === 'auth/invalid-password') {
+            errorMessage = "The password is not strong enough.";
+        }
+        return { success: false, error: errorMessage };
+    }
 }
