@@ -6,7 +6,10 @@ const uiConfig = {
   signInOptions: [
     {
       provider: EmailAuthProvider.PROVIDER_ID,
-      requireDisplayName: false,
+      // Require the user to enter a display name when signing up.
+      requireDisplayName: true, 
+      // Specify that we want to use email and password for sign-in.
+      signInMethod: EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD
     },
   ],
   callbacks: {
