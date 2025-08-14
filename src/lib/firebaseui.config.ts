@@ -7,7 +7,7 @@ const uiConfig = {
   signInOptions: [
     {
       provider: EmailAuthProvider.PROVIDER_ID,
-      requireDisplayName: false, // Don't ask for name on sign up
+      requireDisplayName: false,
     },
   ],
   callbacks: {
@@ -23,6 +23,7 @@ const uiConfig = {
           });
         });
       }
+      // Return true to redirect to signInSuccessUrl
       return true;
     },
   },
