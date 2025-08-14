@@ -7,10 +7,11 @@ import { z } from 'zod';
 import { db } from './firebase';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId, setDoc } from 'firebase/firestore';
 import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
-import { auth } from 'firebase-admin';
+import { getAdminApp } from './firebase-admin';
+import { auth as adminAuth, firestore as adminFirestore } from 'firebase-admin';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
-import { getAdminApp } from './firebase-admin';
+
 
 // Schema for form validation
 const equipmentFormSchema = z.object({
@@ -248,8 +249,8 @@ export const getUser = cache(async (): Promise<User | null> => {
     }
     try {
         getAdminApp();
-        const decodedClaims = await auth().verifySessionCookie(sessionCookie, true);
-        const firebaseUser = await auth().getUser(decodedClaims.uid);
+        const decodedClaims = await adminAuth().verifySessionCookie(sessionCookie, true);
+        const firebaseUser = await adminAuth().getUser(decodedClaims.uid);
         
         return {
           id: firebaseUser.uid,
@@ -267,7 +268,7 @@ export const getUser = cache(async (): Promise<User | null> => {
 export async function getUsers(): Promise<User[]> {
     try {
         getAdminApp();
-        const userRecords = await auth().listUsers();
+        const userRecords = await adminAuth().listUsers();
         return userRecords.users.map(user => ({
             id: user.uid,
             name: user.displayName || 'No Name',
@@ -292,7 +293,7 @@ export async function updateUserRole(userId: string, role: UserRole) {
 
     try {
         getAdminApp();
-        await auth().setCustomUserClaims(userId, { role });
+        await adminAuth().setCustomUserClaims(userId, { role });
         revalidatePath('/dashboard/users');
         return { success: true };
     } catch (error) {
@@ -329,26 +330,26 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
     const { email, password, name } = validatedFields.data;
 
     try {
-        getAdminApp();
-        const userRecord = await auth().createUser({
+        const app = getAdminApp();
+        const auth = adminAuth(app);
+        const firestore = adminFirestore(app);
+
+        const userRecord = await auth.createUser({
             email,
             password,
             displayName: name,
         });
 
-        // Set default role
-        await auth().setCustomUserClaims(userRecord.uid, { role: 'guest' });
+        await auth.setCustomUserClaims(userRecord.uid, { role: 'guest' });
 
-        // Create user document in Firestore
-        const userDocRef = doc(db, "users", userRecord.uid);
-        await setDoc(userDocRef, {
+        const userDocRef = firestore.collection("users").doc(userRecord.uid);
+        await userDocRef.set({
             name: name,
             email: email,
             role: 'guest',
             avatar: 'https://placehold.co/100x100.png',
             createdAt: new Date().toISOString(),
         });
-
 
         return { success: true, userId: userRecord.uid };
     } catch (error: any) {
@@ -363,5 +364,4 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
         }
         return { success: false, error: errorMessage };
     }
-
-    
+}
