@@ -48,7 +48,7 @@ export default function LoginPage() {
             const response = await fetch('/api/auth', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain',
                 },
                 body: result.idToken,
             });
@@ -141,4 +141,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
