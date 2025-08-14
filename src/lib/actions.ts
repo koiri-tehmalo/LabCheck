@@ -407,5 +407,4 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
         }
         return { success: false, error: errorMessage };
     }
-
-    
+}
