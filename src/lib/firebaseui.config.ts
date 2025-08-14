@@ -7,7 +7,8 @@ const uiConfig = {
   signInOptions: [
     {
       provider: EmailAuthProvider.PROVIDER_ID,
-      requireDisplayName: false
+      requireDisplayName: false,
+      disableForgotPassword: true, // This will prevent the "Recover password" flow
     },
   ],
   callbacks: {

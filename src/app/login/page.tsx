@@ -22,10 +22,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     const unregisterAuthObserver = onAuthStateChanged(auth, (user) => {
-      setIsSignedIn(!!user);
-       // This part is just to update the UI state, redirection is handled by the config
       if (user) {
-        router.push('/');
+        setIsSignedIn(true);
+        // Let the firebaseUI config handle the redirect
+      } else {
+        setIsSignedIn(false);
       }
     });
     return () => unregisterAuthObserver();
