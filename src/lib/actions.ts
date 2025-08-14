@@ -258,6 +258,7 @@ export const getUser = cache(async (): Promise<User | null> => {
 
         if (!userDoc.exists) {
             // This case can happen if the user is deleted from Firestore but not from Auth.
+            console.error(`No user document found for UID: ${decodedClaims.uid}`);
             return null;
         }
 
@@ -396,14 +397,17 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
 
         return { success: true, userId: userRecord.uid };
     } catch (error: any) {
-        console.error("Firebase SignUp Error:", error.code, error.message);
+        console.error("Firebase SignUp Error:", error);
         let errorMessage = "An unexpected error occurred.";
-        if (error.code === 'auth/email-already-exists') {
-            errorMessage = "This email is already in use by another account.";
-        } else if (error.code === 'auth/invalid-password') {
-            errorMessage = "The password is not strong enough.";
-        } else if (error.code) {
-            errorMessage = error.message;
+        if (error instanceof Error && 'code' in error) {
+            const firebaseError = error as { code: string; message: string };
+            if (firebaseError.code === 'auth/email-already-exists') {
+                errorMessage = "This email is already in use by another account.";
+            } else if (firebaseError.code === 'auth/invalid-password') {
+                errorMessage = "The password is not strong enough.";
+            } else if (firebaseError.code) {
+                errorMessage = firebaseError.message;
+            }
         }
         return { success: false, error: errorMessage };
     }
