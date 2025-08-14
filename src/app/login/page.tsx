@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithEmail, createSession } from "@/lib/actions";
+import { signInWithEmail } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
@@ -44,17 +44,33 @@ export default function LoginPage() {
     const result = await signInWithEmail(values);
     
     if (result.success && result.idToken) {
-        const sessionResult = await createSession(result.idToken);
-        if (sessionResult.success) {
-            toast({
-                title: "Login Successful",
-                description: "Welcome back!",
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: result.idToken,
             });
-            router.push('/');
-        } else {
-             toast({
+
+            if (response.ok) {
+                toast({
+                    title: "Login Successful",
+                    description: "Welcome back!",
+                });
+                router.push('/');
+                router.refresh(); // Force a refresh to update layout with user data
+            } else {
+                 toast({
+                    title: "Login Failed",
+                    description: "Could not create session. Please try again.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+            toast({
                 title: "Login Failed",
-                description: sessionResult.error || "Could not create session. Please try again.",
+                description: "An unexpected error occurred while creating the session.",
                 variant: "destructive",
             });
         }
@@ -125,3 +141,4 @@ export default function LoginPage() {
     </main>
   );
 }
+

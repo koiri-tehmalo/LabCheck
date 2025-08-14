@@ -454,24 +454,3 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
         return { success: false, error: errorMessage };
     }
 }
-
-// This function creates the session cookie. It should be called after a
-// successful login.
-export async function createSession(idToken: string) {
-    try {
-        const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-        getAdminApp(); // Initialize Firebase Admin
-        const sessionCookie = await adminAuth().createSessionCookie(idToken, { expiresIn });
-
-        cookies().set('session', sessionCookie, {
-            maxAge: expiresIn,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-        });
-        return { success: true };
-    } catch (error) {
-        console.error('Error creating session cookie:', error);
-        return { success: false, error: "Failed to create session." };
-    }
-}
