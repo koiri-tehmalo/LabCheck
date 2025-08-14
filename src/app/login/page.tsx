@@ -22,12 +22,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     // We are only listening for auth state changes to show/hide the UI.
-    // The redirection is now handled by the FirebaseUI config.
+    // The redirection is now handled by the FirebaseUI config's signInSuccessUrl.
     const unregisterAuthObserver = onAuthStateChanged(auth, (user) => {
       setIsSignedIn(!!user);
+      if (user) {
+        router.push('/');
+      }
     });
     return () => unregisterAuthObserver();
-  }, []);
+  }, [router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
