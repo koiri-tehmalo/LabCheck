@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from './firebase';
-import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId, setDoc } from 'firebase/firestore';
 import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
 import { auth } from 'firebase-admin';
 import { cookies } from 'next/headers';
@@ -336,7 +336,19 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
             displayName: name,
         });
 
+        // Set default role
         await auth().setCustomUserClaims(userRecord.uid, { role: 'guest' });
+
+        // Create user document in Firestore
+        const userDocRef = doc(db, "users", userRecord.uid);
+        await setDoc(userDocRef, {
+            name: name,
+            email: email,
+            role: 'guest',
+            avatar: 'https://placehold.co/100x100.png',
+            createdAt: new Date().toISOString(),
+        });
+
 
         return { success: true, userId: userRecord.uid };
     } catch (error: any) {
@@ -351,4 +363,5 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
         }
         return { success: false, error: errorMessage };
     }
-}
+
+    
