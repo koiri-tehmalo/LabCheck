@@ -4,7 +4,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey: "AIzaSyBBn9Rrzd0vklTHVHdR2wKQ9y2w3Id5Yvk",
   authDomain: "asset-tracker-w0bxu.firebaseapp.com",
   projectId: "asset-tracker-w0bxu",
   storageBucket: "asset-tracker-w0bxu.appspot.com",
