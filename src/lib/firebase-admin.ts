@@ -2,19 +2,30 @@
 import { auth, apps, initializeApp, App, cert } from 'firebase-admin';
 import serviceAccount from '../../asset-tracker-w0bxu-firebase-adminsdk-fbsvc-51589e9d3d.json';
 
-let app: App;
+const projectId = 'asset-tracker-w0bxu';
 
-export function getAdminApp(): App {
-  if (apps.length > 0) {
-    return apps[0] as App;
+// Helper function to initialize the app if it's not already initialized.
+function initializeAdminApp(): App {
+  const appName = `firebase-admin-app-${projectId}`;
+  const existingApp = apps.find(app => app?.name === appName);
+  
+  if (existingApp) {
+    return existingApp;
   }
   
   try {
-    app = initializeApp({
+    return initializeApp({
       credential: cert(serviceAccount as any),
-    });
+      projectId: projectId, // Explicitly set the project ID
+    }, appName);
   } catch (err: any) {
-    console.log('failed to initializeApp', err.stack);
+    console.error('Failed to initialize Firebase Admin App:', err.stack);
+    // Re-throw the error to ensure the calling function knows about the failure.
+    throw err;
   }
-  return app;
+}
+
+// Export a single instance of the initialized app.
+export function getAdminApp(): App {
+  return initializeAdminApp();
 }
