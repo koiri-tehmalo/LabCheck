@@ -101,28 +101,27 @@ export default async function RootLayout({
                 </SidebarMenu>
               </SidebarContent>
               {user ? (
-                <SidebarFooter className="p-4 border-t border-sidebar-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col text-sm truncate">
-                        <span className="font-semibold text-sidebar-foreground">{user.name}</span>
-                        <span className="text-muted-foreground text-xs">{user.email}</span>
-                      </div>
+                <SidebarFooter className="p-4 border-t border-sidebar-border flex flex-col gap-4">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col text-sm truncate">
+                      <span className="font-semibold text-sidebar-foreground">{user.name}</span>
+                      <span className="text-muted-foreground text-xs">{user.email}</span>
                     </div>
-                    <form action={signOut}>
-                        <Button type="submit" variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                            <LogOut className="h-4 w-4" />
-                        </Button>
-                    </form>
                   </div>
+                  <form action={signOut} className="w-full">
+                      <Button type="submit" variant="ghost" className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Sign Out</span>
+                      </Button>
+                  </form>
                 </SidebarFooter>
               ) : (
                  <SidebarFooter className="p-4 border-t border-sidebar-border">
-                    <Button asChild>
+                    <Button asChild className="w-full">
                       <Link href="/login">
                         <LogIn className="mr-2 h-4 w-4" />
                         Sign In
