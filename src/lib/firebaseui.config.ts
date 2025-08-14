@@ -6,26 +6,29 @@ const uiConfig = {
   signInOptions: [
     {
       provider: EmailAuthProvider.PROVIDER_ID,
-      // ระบุว่าต้องการใช้อีเมลและรหัสผ่านในการล็อกอิน
+      // This forces the UI to use the email and password sign-in method.
       signInMethod: EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD,
-      // กำหนดให้ต้องใส่ชื่อตอนสมัครสมาชิก
-      requireDisplayName: true, 
+      // We don't need user creation via the login form, so we disable it.
+      // Registration should only happen on the /register page.
+      disableSignUp: {
+        status: true
+      }
     },
   ],
   callbacks: {
-    // ฟังก์ชันนี้จะถูกเรียกเมื่อผู้ใช้ล็อกอินสำเร็จ
+    // This callback function is triggered when a user successfully signs in.
     signInSuccessWithAuthResult: function (authResult: any) {
       if (authResult.user) {
-        // ดึง ID token ของผู้ใช้
+        // Get the user's ID token.
         authResult.user.getIdToken().then((idToken: string) => {
-          // ส่ง token ไปยัง backend เพื่อสร้าง session cookie
+          // Send the token to our backend to create a session cookie.
           return fetch('/api/auth', {
             method: 'POST',
             body: idToken,
           });
         });
       }
-      // คืนค่า true เพื่อ redirect ไปยังหน้าหลักหลังจากล็อกอินสำเร็จ
+      // Return true to redirect to the home page after a successful login.
       return true;
     },
   },
