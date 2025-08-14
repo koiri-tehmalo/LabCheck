@@ -21,10 +21,9 @@ export default function LoginPage() {
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
-    // We are only listening for auth state changes to show/hide the UI.
-    // The redirection is now handled by the FirebaseUI config's signInSuccessUrl.
     const unregisterAuthObserver = onAuthStateChanged(auth, (user) => {
       setIsSignedIn(!!user);
+       // This part is just to update the UI state, redirection is handled by the config
       if (user) {
         router.push('/');
       }

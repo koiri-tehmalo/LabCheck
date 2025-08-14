@@ -7,7 +7,7 @@ const uiConfig = {
   signInOptions: [
     {
       provider: EmailAuthProvider.PROVIDER_ID,
-      requireDisplayName: true, // This can be true for sign up, but for sign in flow it's better to keep it simple. Let's make it false.
+      requireDisplayName: false
     },
   ],
   callbacks: {
@@ -23,10 +23,9 @@ const uiConfig = {
             body: idToken,
           }).then((response) => {
             if (response.ok) {
-              // The session cookie is set. Let FirebaseUI handle the redirect.
-              return true;
+              window.location.assign('/');
+              return false; // Prevent FirebaseUI from redirecting.
             }
-            // Handle error case if session creation fails
             console.error('Failed to create session cookie.');
             return false;
           });
