@@ -16,7 +16,7 @@ function initializeAdminApp(): App {
   try {
     return initializeApp({
       credential: cert(serviceAccount as any),
-      projectId: projectId, // Explicitly set the project ID
+      projectId: projectId,
     }, appName);
   } catch (err: any) {
     console.error('Failed to initialize Firebase Admin App:', err.stack);

@@ -336,7 +336,6 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
             displayName: name,
         });
 
-        // Set default role to 'guest'
         await auth().setCustomUserClaims(userRecord.uid, { role: 'guest' });
 
         return { success: true, userId: userRecord.uid };
@@ -347,6 +346,8 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
             errorMessage = "This email is already in use by another account.";
         } else if (error.code === 'auth/invalid-password') {
             errorMessage = "The password is not strong enough.";
+        } else if (error.code) {
+            errorMessage = error.message;
         }
         return { success: false, error: errorMessage };
     }

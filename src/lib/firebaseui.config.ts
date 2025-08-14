@@ -11,10 +11,8 @@ const uiConfig = {
   ],
   callbacks: {
     signInSuccessWithAuthResult: function (authResult: any) {
-      const user = authResult.user;
-      if (user) {
-        user.getIdToken().then((idToken: string) => {
-          //This is a crucial step, you’re passing the idToken to the server-side to create a session cookie.
+      if (authResult.user) {
+        authResult.user.getIdToken().then((idToken: string) => {
           fetch('/api/auth', {
             method: 'POST',
             body: idToken,
