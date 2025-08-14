@@ -1,5 +1,6 @@
 
 import { auth, apps, initializeApp, App, cert } from 'firebase-admin';
+import serviceAccount from '../../asset-tracker-w0bxu-firebase-adminsdk-fbsvc-51589e9d3d.json';
 
 let app: App;
 
@@ -9,9 +10,8 @@ export function getAdminApp(): App {
   }
   
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
     app = initializeApp({
-      credential: cert(serviceAccount),
+      credential: cert(serviceAccount as any),
     });
   } catch (err: any) {
     console.log('failed to initializeApp', err.stack);
