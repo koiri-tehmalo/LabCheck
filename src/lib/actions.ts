@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from './firebase';
-import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId, setDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId } from 'firebase/firestore';
 import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
 import { getAdminApp } from './firebase-admin';
 import { auth as adminAuth, firestore as adminFirestore } from 'firebase-admin';
@@ -247,19 +247,32 @@ export const getUser = cache(async (): Promise<User | null> => {
     if (!sessionCookie) {
         return null;
     }
+
     try {
-        getAdminApp();
-        const decodedClaims = await adminAuth().verifySessionCookie(sessionCookie, true);
-        const firebaseUser = await adminAuth().getUser(decodedClaims.uid);
+        const app = getAdminApp();
+        const auth = adminAuth(app);
+        const firestore = adminFirestore(app);
+
+        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        const userDoc = await firestore.collection('users').doc(decodedClaims.uid).get();
+
+        if (!userDoc.exists) {
+            // This case can happen if the user is deleted from Firestore but not from Auth.
+            return null;
+        }
+
+        const userData = userDoc.data();
         
         return {
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName || 'No Name',
-          email: firebaseUser.email || '',
-          avatar: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-          role: (firebaseUser.customClaims?.role as 'admin' | 'auditor' | 'guest') || 'guest',
+          id: decodedClaims.uid,
+          name: userData?.name || 'No Name',
+          email: userData?.email || '',
+          avatar: userData?.avatar || 'https://placehold.co/100x100.png',
+          role: (userData?.role as UserRole) || 'guest',
         };
     } catch (error) {
+        // Session cookie is invalid or expired.
+        console.error("Error verifying session cookie or fetching user data:", error);
         return null;
     }
 });
@@ -267,15 +280,32 @@ export const getUser = cache(async (): Promise<User | null> => {
 
 export async function getUsers(): Promise<User[]> {
     try {
-        getAdminApp();
-        const userRecords = await adminAuth().listUsers();
-        return userRecords.users.map(user => ({
-            id: user.uid,
-            name: user.displayName || 'No Name',
-            email: user.email || '',
-            avatar: user.photoURL || 'https://placehold.co/100x100.png',
-            role: (user.customClaims?.role as 'admin' | 'auditor' | 'guest') || 'guest',
-        }));
+        const app = getAdminApp();
+        const firestore = adminFirestore(app);
+        const usersSnapshot = await firestore.collection('users').get();
+        
+        if (usersSnapshot.empty) {
+            return [];
+        }
+
+        const auth = adminAuth(app);
+        const allAuthUsers = await auth.listUsers();
+        const authUserMap = new Map(allAuthUsers.users.map(u => [u.uid, u]));
+
+        const users: User[] = usersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const authUser = authUserMap.get(doc.id);
+            return {
+                id: doc.id,
+                name: data.name || authUser?.displayName || 'No Name',
+                email: data.email || authUser?.email || '',
+                avatar: data.avatar || authUser?.photoURL || 'https://placehold.co/100x100.png',
+                role: (data.role as UserRole) || 'guest',
+            };
+        });
+
+        return users;
+
     } catch (error) {
         console.error('Error fetching users:', error);
         return [];
@@ -292,8 +322,17 @@ export async function updateUserRole(userId: string, role: UserRole) {
     }
 
     try {
-        getAdminApp();
-        await adminAuth().setCustomUserClaims(userId, { role });
+        const app = getAdminApp();
+        const auth = adminAuth(app);
+        const firestore = adminFirestore(app);
+
+        // Set custom claims for Auth
+        await auth.setCustomUserClaims(userId, { role });
+
+        // Update role in Firestore
+        const userDocRef = firestore.collection("users").doc(userId);
+        await userDocRef.update({ role: role });
+        
         revalidatePath('/dashboard/users');
         return { success: true };
     } catch (error) {
@@ -340,13 +379,17 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
             displayName: name,
         });
 
-        await auth.setCustomUserClaims(userRecord.uid, { role: 'guest' });
+        const initialRole = 'auditor';
 
+        // This sets the role in Firebase Authentication's custom claims.
+        await auth.setCustomUserClaims(userRecord.uid, { role: initialRole });
+
+        // This creates a corresponding user document in Firestore.
         const userDocRef = firestore.collection("users").doc(userRecord.uid);
         await userDocRef.set({
             name: name,
             email: email,
-            role: 'guest',
+            role: initialRole,
             avatar: 'https://placehold.co/100x100.png',
             createdAt: new Date().toISOString(),
         });
@@ -364,4 +407,5 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
         }
         return { success: false, error: errorMessage };
     }
-}
+
+    
