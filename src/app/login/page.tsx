@@ -21,15 +21,13 @@ export default function LoginPage() {
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
+    // We are only listening for auth state changes to show/hide the UI.
+    // The redirection is now handled by the FirebaseUI config.
     const unregisterAuthObserver = onAuthStateChanged(auth, (user) => {
-      const signedIn = !!user;
-      setIsSignedIn(signedIn);
-      if (signedIn) {
-        router.push('/');
-      }
+      setIsSignedIn(!!user);
     });
     return () => unregisterAuthObserver();
-  }, [router]);
+  }, []);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -41,7 +39,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-primary tracking-tight">Asset Tracker</h1>
           <p className="text-muted-foreground mt-2">Welcome! Please sign in to continue.</p>
         </div>
-        {!isSignedIn && (
+        {!isSignedIn ? (
           <>
             <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
             <Separator className="my-6" />
@@ -54,8 +52,7 @@ export default function LoginPage() {
                 </p>
             </div>
           </>
-        )}
-        {isSignedIn && (
+        ) : (
              <div className="text-center">
                 <p>You are signed in. Redirecting...</p>
             </div>

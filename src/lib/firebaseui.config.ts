@@ -3,13 +3,13 @@ import { EmailAuthProvider } from 'firebase/auth';
 
 const uiConfig = {
   signInFlow: 'popup',
+  // Redirect to / after sign in is successful.
+  signInSuccessUrl: '/',
   signInOptions: [
     {
       provider: EmailAuthProvider.PROVIDER_ID,
-      // This forces the UI to use the email and password sign-in method.
       signInMethod: EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD,
       // We don't need user creation via the login form, so we disable it.
-      // Registration should only happen on the /register page.
       disableSignUp: {
         status: true
       }
@@ -28,7 +28,7 @@ const uiConfig = {
           });
         });
       }
-      // Return true to redirect to the home page after a successful login.
+      // Return true to redirect to signInSuccessUrl.
       return true;
     },
   },
