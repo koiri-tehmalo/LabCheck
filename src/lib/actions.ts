@@ -4,7 +4,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { db } from './firebase';
+import { db, auth as clientAuth } from './firebase'; // Import client-side auth
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId } from 'firebase/firestore';
 import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
 import { getAdminApp } from './firebase-admin';
@@ -34,6 +35,11 @@ const signUpSchema = z.object({
   name: z.string().min(2, { message: "Name is required." }),
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+});
+
+const signInSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Password is required."),
 });
 
 
@@ -410,5 +416,62 @@ export async function signUp(values: z.infer<typeof signUpSchema>) {
             }
         }
         return { success: false, error: errorMessage };
+    }
+}
+
+// This function must be called from a Client Component or a Server Action
+// but it uses the client SDK. We can't use the Admin SDK to sign in a user.
+export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
+    try {
+        const validatedFields = signInSchema.safeParse(values);
+        if (!validatedFields.success) {
+            return { success: false, error: "Invalid email or password format." };
+        }
+        
+        const { email, password } = validatedFields.data;
+        const userCredential = await signInWithEmailAndPassword(clientAuth, email, password);
+        const idToken = await userCredential.user.getIdToken();
+
+        return { success: true, idToken };
+    } catch (error: any) {
+        let errorMessage = "An unknown error occurred.";
+        if (error.code) {
+            switch (error.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    errorMessage = 'Invalid email or password.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                default:
+                    errorMessage = 'An unexpected error occurred during sign-in.';
+                    break;
+            }
+        }
+        console.error('Sign In Error:', error);
+        return { success: false, error: errorMessage };
+    }
+}
+
+// This function creates the session cookie. It should be called after a
+// successful login.
+export async function createSession(idToken: string) {
+    try {
+        const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+        getAdminApp(); // Initialize Firebase Admin
+        const sessionCookie = await adminAuth().createSessionCookie(idToken, { expiresIn });
+
+        cookies().set('session', sessionCookie, {
+            maxAge: expiresIn,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+        });
+        return { success: true };
+    } catch (error) {
+        console.error('Error creating session cookie:', error);
+        return { success: false, error: "Failed to create session." };
     }
 }
