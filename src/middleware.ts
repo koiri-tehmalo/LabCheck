@@ -8,8 +8,8 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/login', '/register'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Allow access to the equipment list and individual equipment pages for everyone
-  if (pathname.startsWith('/dashboard/equipment')) {
+  // Allow public access to view equipment and sets lists and individual items
+  if (pathname.startsWith('/dashboard/equipment') || pathname.startsWith('/dashboard/sets')) {
     return NextResponse.next();
   }
 
