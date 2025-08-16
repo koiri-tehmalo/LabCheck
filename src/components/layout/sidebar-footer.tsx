@@ -7,14 +7,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SidebarFooter as FooterContainer } from "@/components/ui/sidebar";
 import { signOut } from "@/lib/actions";
+import type { User } from "@/lib/types";
 
-type User = {
-  name: string;
-  email: string;
-  avatar: string;
-} | null;
-
-export default function SidebarFooter({ user }: { user: User }) {
+export default function SidebarFooter({ user }: { user: User | null }) {
   return user ? (
     <FooterContainer className="p-4 border-t border-sidebar-border flex flex-col gap-4">
       <div className="flex items-center gap-2 overflow-hidden">

@@ -10,7 +10,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter as SidebarFooterContainer,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
