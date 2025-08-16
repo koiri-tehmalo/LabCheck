@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
 import { EquipmentTable } from "@/components/dashboard/equipment-table";
 import { getEquipmentItems, getUser } from "@/lib/actions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { EquipmentItem, User } from "@/lib/types";
 import {
   Dialog,
@@ -23,6 +23,7 @@ export default function EquipmentPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchEquipmentAndUser = async () => {
     setLoading(true);
@@ -45,6 +46,14 @@ export default function EquipmentPage() {
 
   const canManage = user?.role === 'admin' || user?.role === 'auditor';
 
+  const filteredEquipment = useMemo(() => {
+    if (!searchTerm) return equipment;
+    return equipment.filter(item =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.assetId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [equipment, searchTerm]);
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -55,7 +64,12 @@ export default function EquipmentPage() {
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search equipment..." className="pl-10" />
+          <Input 
+            placeholder="Search by name or asset ID..." 
+            className="pl-10" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         {canManage && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -78,7 +92,7 @@ export default function EquipmentPage() {
         )}
       </div>
       
-      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={equipment} onDataChange={fetchEquipmentAndUser} user={user} />}
+      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={filteredEquipment} onDataChange={fetchEquipmentAndUser} user={user} />}
     </div>
   );
 }
