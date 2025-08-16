@@ -13,7 +13,6 @@ import { auth as adminAuth, firestore as adminFirestore } from 'firebase-admin';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 
-
 // Schema for form validation
 const equipmentFormSchema = z.object({
   assetId: z.string().min(1, { message: "Asset ID is required." }),
@@ -363,6 +362,7 @@ export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
 
 export async function signOut() {
     cookies().delete('session');
+    revalidatePath('/');
     redirect('/login');
 }
 
@@ -454,3 +454,7 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
         return { success: false, error: errorMessage };
     }
 }
+
+    
+
+    
