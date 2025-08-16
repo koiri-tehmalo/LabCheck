@@ -259,15 +259,26 @@ export const getUser = cache(async (): Promise<User | null> => {
         const firestore = adminFirestore(app);
 
         const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        const userDoc = await firestore.collection('users').doc(decodedClaims.uid).get();
+        const userRef = firestore.collection('users').doc(decodedClaims.uid);
+        const userDoc = await userRef.get();
+
+        let userData;
 
         if (!userDoc.exists) {
-            // This case can happen if the user is deleted from Firestore but not from Auth.
-            console.error(`No user document found for UID: ${decodedClaims.uid}`);
-            return null;
+            console.warn(`No user document found for UID: ${decodedClaims.uid}, creating one...`);
+            
+            const newUser = {
+                name: decodedClaims.name || decodedClaims.email?.split('@')[0] || 'New User',
+                email: decodedClaims.email || '',
+                avatar: decodedClaims.picture || 'https://placehold.co/100x100.png',
+                role: 'guest', // Assign a safe, default role
+                createdAt: new Date().toISOString(),
+            };
+            await userRef.set(newUser);
+            userData = newUser;
+        } else {
+            userData = userDoc.data();
         }
-
-        const userData = userDoc.data();
         
         return {
           id: decodedClaims.uid,
@@ -454,8 +465,3 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
         return { success: false, error: errorMessage };
     }
 }
-
-    
-
-    
-
