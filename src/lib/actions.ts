@@ -4,12 +4,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { db, auth as clientAuth } from './firebase'; // Import client-side auth
+import { db, auth as clientAuth, storage } from './firebase'; // Import client-side auth
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId } from 'firebase/firestore';
 import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
 import { getAdminApp } from './firebase-admin';
-import { auth as adminAuth, firestore as adminFirestore } from 'firebase-admin';
+import { auth as adminAuth, firestore as adminFirestore, storage as adminStorage } from 'firebase-admin';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 
@@ -464,4 +464,48 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
         console.error('Sign In Error:', error);
         return { success: false, error: errorMessage };
     }
+}
+
+export async function updateUserAvatar(formData: FormData) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const file = formData.get('avatar') as File | null;
+  if (!file) {
+    throw new Error('No file uploaded');
+  }
+
+  const app = getAdminApp();
+  const bucket = adminStorage(app).bucket(`gs://${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'asset-tracker-w0bxu.appspot.com'}`);
+  
+  const filePath = `avatars/${user.id}/${file.name}`;
+  const fileRef = bucket.file(filePath);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await fileRef.save(buffer, {
+    metadata: {
+      contentType: file.type,
+    },
+  });
+
+  const [url] = await fileRef.getSignedUrl({
+    action: 'read',
+    expires: '03-09-2491', // A very long time in the future
+  });
+  
+  // We only want the URL part, not the query params for the public URL
+  const publicUrl = url.split('?')[0];
+
+  const firestore = adminFirestore(app);
+  await firestore.collection('users').doc(user.id).update({
+    avatar: publicUrl,
+  });
+
+  await adminAuth(app).updateUser(user.id, { photoURL: publicUrl });
+
+  revalidatePath('/', 'layout');
+  return { success: true, newAvatarUrl: publicUrl };
 }
