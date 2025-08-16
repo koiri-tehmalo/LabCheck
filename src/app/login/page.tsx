@@ -51,6 +51,7 @@ export default function LoginPage() {
                     'Content-Type': 'text/plain',
                 },
                 body: result.idToken,
+                credentials: 'include', // Ensure cookies are sent and received
             });
 
             if (response.ok) {
