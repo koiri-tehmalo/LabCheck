@@ -4,29 +4,35 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, ServerCrash } from 'lucide-react';
-import { getEquipmentItems, getSetOptions } from '@/lib/actions';
+import { Download, FileText, ServerCrash, Lock } from 'lucide-react';
+import { getEquipmentItems, getSetOptions, getUser } from '@/lib/actions';
 import * as XLSX from 'xlsx';
-import type { EquipmentItem } from '@/lib/types';
+import type { EquipmentItem, User } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/dashboard/status-badge';
+import Link from 'next/link';
 
 export default function ReportsPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [setOptions, setSetOptions] = useState<{ id: string; name: string }[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const itemsPromise = getEquipmentItems();
-        const setsPromise = getSetOptions();
-        const [items, sets] = await Promise.all([itemsPromise, setsPromise]);
-        setEquipment(items);
-        setSetOptions(sets);
+        const user = await getUser();
+        setUser(user);
+        if (user) { // Only fetch data if user is logged in
+          const itemsPromise = getEquipmentItems();
+          const setsPromise = getSetOptions();
+          const [items, sets] = await Promise.all([itemsPromise, setsPromise]);
+          setEquipment(items);
+          setSetOptions(sets);
+        }
       } catch (e) {
         setError('Failed to load data.');
         console.error(e);
@@ -72,6 +78,35 @@ export default function ReportsPage() {
     XLSX.writeFile(workbook, "Equipment_Report.xlsx");
   };
 
+  if (loading) {
+     return (
+        <div className="space-y-4">
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Card>
+                <CardHeader><Skeleton className="h-6 w-1/3" /></CardHeader>
+                <CardContent><Skeleton className="h-24 w-full" /></CardContent>
+            </Card>
+        </div>
+     )
+  }
+
+  if (!user) {
+    return (
+        <Card className="mt-8">
+            <CardContent className="py-12 flex flex-col items-center justify-center text-center">
+                <Lock className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold">Access Denied</h3>
+                <p className="text-muted-foreground mt-2">You must be logged in to view reports.</p>
+                <Button asChild className="mt-6">
+                    <Link href="/login">Sign In</Link>
+                </Button>
+            </CardContent>
+        </Card>
+    )
+  }
+
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -98,12 +133,6 @@ export default function ReportsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading && (
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </div>
-          )}
           {error && (
             <Alert variant="destructive">
               <ServerCrash className="h-4 w-4" />
@@ -171,4 +200,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
