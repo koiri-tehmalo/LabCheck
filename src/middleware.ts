@@ -14,16 +14,13 @@ export async function middleware(request: NextRequest) {
 
   // If the user is not logged in and tries to access a protected route, redirect to login
   if (!session && !publicRoutes.includes(pathname)) {
-     // Allow access to root for non-logged-in users
+     // Allow access to root for non-logged-in users, as it's the dashboard.
     if (pathname === '/') {
         return NextResponse.next();
     }
-    // You can decide which pages are public and which require login
-    // For now, let's redirect all non-public, non-auth pages to login
-    const protectedPrefixes = ['/dashboard'];
-    if (protectedPrefixes.some(p => pathname.startsWith(p))) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
+    // Any other route that is not public requires a session.
+    // This simplifies the logic by not needing a specific list of protected routes.
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
