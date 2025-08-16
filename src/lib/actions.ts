@@ -362,7 +362,7 @@ export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
 
 export async function signOut() {
     cookies().delete('session');
-    revalidatePath('/');
+    revalidatePath('/', 'layout');
     redirect('/login');
 }
 
@@ -458,3 +458,4 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
     
 
     
+
