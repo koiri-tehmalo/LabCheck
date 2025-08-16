@@ -478,7 +478,7 @@ export async function updateUserAvatar(formData: FormData) {
   }
 
   const app = getAdminApp();
-  const bucket = adminStorage(app).bucket(`gs://${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'asset-tracker-w0bxu.appspot.com'}`);
+  const bucket = adminStorage(app).bucket(`gs://${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}`);
   
   const filePath = `avatars/${user.id}/${file.name}`;
   const fileRef = bucket.file(filePath);
