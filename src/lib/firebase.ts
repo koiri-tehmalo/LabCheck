@@ -1,8 +1,8 @@
 
 import { initializeApp, getApp, getApps, type FirebaseOptions } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBBn9Rrzd0vklTHVHdR2wKQ9y2w3Id5Yvk",
@@ -13,10 +13,21 @@ const firebaseConfig: FirebaseOptions = {
   appId: "1:706312783282:web:1de0be7aa749ac502e50ab",
 };
 
-// Initialize Firebase
+
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+
 const auth = getAuth(app);
+const db = getFirestore(app);
 const storage = getStorage(app);
+
+// NOTE: If you want to use the local Firebase emulators, uncomment the lines below.
+// Make sure you have the emulators running with `firebase emulators:start`
+// if (typeof window !== 'undefined' && window.location.hostname === "localhost") {
+//   console.log("Connecting to local Firebase emulators");
+//   connectAuthEmulator(auth, "http://localhost:9099");
+//   connectFirestoreEmulator(db, "http://localhost:8080");
+//   connectStorageEmulator(storage, "http://localhost:9199");
+// }
+
 
 export { app, db, auth, storage };

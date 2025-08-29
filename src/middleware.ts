@@ -2,32 +2,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  const session = request.cookies.get('session')?.value;
-  const { pathname } = request.nextUrl;
-
-  const publicRoutes = ['/login', '/register'];
-  const isPublicRoute = publicRoutes.includes(pathname);
-
-  // Allow public access to view equipment and sets lists and individual items
-  if (pathname.startsWith('/dashboard/equipment') || pathname.startsWith('/dashboard/sets')) {
-    return NextResponse.next();
-  }
-
-  // If the user is logged in and tries to access a public route (login/register), redirect to home
-  if (session && isPublicRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // If the user is not logged in and tries to access a protected route, redirect to login
-  if (!session && !isPublicRoute) {
-    // Allow access to the root dashboard page for non-logged-in users as a public landing page.
-    if (pathname === '/') {
-        return NextResponse.next();
-    }
-    // Any other route that is not public requires a session.
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
+  // Since we moved to client-side auth, middleware can't reliably
+  // know the user's auth state from a cookie anymore.
+  // We will allow all requests to pass through and handle auth checks
+  // on the client-side within each page or component.
+  
+  // This simplifies the middleware significantly.
+  // You might want to add back rules later if you have pages
+  // that are strictly server-gated and don't have a client-side component.
   return NextResponse.next();
 }
 

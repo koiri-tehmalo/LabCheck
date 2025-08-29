@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithEmail } from "@/lib/actions";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
@@ -41,46 +42,36 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: LoginFormValues) {
-    const result = await signInWithEmail(values);
-    
-    if (result.success && result.idToken) {
-        try {
-            const response = await fetch('/api/auth', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain',
-                },
-                body: result.idToken,
-                credentials: 'include', // Ensure cookies are sent and received
-            });
-
-            if (response.ok) {
-                toast({
-                    title: "Login Successful",
-                    description: "Welcome back!",
-                });
-                router.push('/');
-                router.refresh(); // Force a refresh to update layout with user data
-            } else {
-                 toast({
-                    title: "Login Failed",
-                    description: "Could not create session. Please try again.",
-                    variant: "destructive",
-                });
+    try {
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        toast({
+            title: "Login Successful",
+            description: "Welcome back!",
+        });
+        router.push('/');
+        router.refresh();
+    } catch (error: any) {
+        let errorMessage = "An unknown error occurred. Please check your credentials.";
+        if (error.code) {
+            switch (error.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    errorMessage = 'Invalid email or password.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                default:
+                    errorMessage = 'An unexpected error occurred during sign-in.';
+                    break;
             }
-        } catch (error) {
-            toast({
-                title: "Login Failed",
-                description: "An unexpected error occurred while creating the session.",
-                variant: "destructive",
-            });
         }
-    } else {
-      toast({
-        title: "Login Failed",
-        description: result.error || "An unknown error occurred. Please check your credentials.",
-        variant: "destructive",
-      });
+        toast({
+            title: "Login Failed",
+            description: errorMessage,
+            variant: "destructive",
+        });
     }
   }
 
@@ -142,5 +133,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    

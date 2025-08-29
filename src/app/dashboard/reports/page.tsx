@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ServerCrash, Lock } from 'lucide-react';
-import { getEquipmentItems, getSetOptions, getUser } from '@/lib/actions';
+import { getEquipmentItems, getSetOptions } from '@/lib/actions';
 import * as XLSX from 'xlsx';
 import type { EquipmentItem, User } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,31 +13,28 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/dashboard/status-badge';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ReportsPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [setOptions, setSetOptions] = useState<{ id: string; name: string }[]>([]);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useAuth();
+  const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const user = await getUser();
-        setUser(user);
-        if (user) { // Only fetch data if user is logged in
-          const itemsPromise = getEquipmentItems();
-          const setsPromise = getSetOptions();
-          const [items, sets] = await Promise.all([itemsPromise, setsPromise]);
-          setEquipment(items);
-          setSetOptions(sets);
-        }
+        const itemsPromise = getEquipmentItems();
+        const setsPromise = getSetOptions();
+        const [items, sets] = await Promise.all([itemsPromise, setsPromise]);
+        setEquipment(items);
+        setSetOptions(sets);
       } catch (e) {
         setError('Failed to load data.');
         console.error(e);
       } finally {
-        setLoading(false);
+        setDataLoading(false);
       }
     }
     fetchData();
@@ -77,6 +74,8 @@ export default function ReportsPage() {
 
     XLSX.writeFile(workbook, "Equipment_Report.xlsx");
   };
+
+  const loading = userLoading || dataLoading;
 
   if (loading) {
      return (

@@ -7,7 +7,7 @@ import { PlusCircle, Search } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { getEquipmentSets, getUser } from "@/lib/actions";
+import { getEquipmentSets } from "@/lib/actions";
 import { useEffect, useState, useMemo } from "react";
 import type { EquipmentSet, User } from "@/lib/types";
 import {
@@ -21,35 +21,34 @@ import {
 import { SetForm } from "@/components/dashboard/set-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+
 
 export default function SetsPage() {
   const [sets, setSets] = useState<EquipmentSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
 
-  const fetchSetsAndUser = async () => {
+  const fetchSets = async () => {
     setLoading(true);
-    const itemsPromise = getEquipmentSets();
-    const userPromise = getUser();
-    const [items, userData] = await Promise.all([itemsPromise, userPromise]);
+    const items = await getEquipmentSets();
     setSets(items);
-    setUser(userData);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchSetsAndUser();
+    fetchSets();
   }, []);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
-    fetchSetsAndUser(); // Refresh data
+    fetchSets(); // Refresh data
   };
   
-  const canManage = user?.role === 'admin' || user?.role === 'auditor';
+  const canManage = !!user;
 
   const filteredSets = useMemo(() => {
     if (!searchTerm) return sets;

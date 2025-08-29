@@ -6,18 +6,34 @@ import { LogIn, LogOut, Loader2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SidebarFooter as FooterContainer } from "@/components/ui/sidebar";
-import { signOut, updateUserAvatar } from "@/lib/actions";
+import { updateUserAvatar } from "@/lib/actions";
 import type { User } from "@/lib/types";
 import { useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
-export default function SidebarFooter({ user }: { user: User | null }) {
+export default function SidebarFooter() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+    toast({
+      title: "Feature Disabled",
+      description: "Avatar updates are temporarily disabled.",
+      variant: "destructive",
+    });
+    // fileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,11 +45,15 @@ export default function SidebarFooter({ user }: { user: User | null }) {
     formData.append('avatar', file);
 
     try {
-      await updateUserAvatar(formData);
-      toast({
-        title: "Avatar Updated",
-        description: "Your new avatar has been saved.",
-      });
+      const result = await updateUserAvatar(formData);
+       if (result.success) {
+        toast({
+          title: "Avatar Updated",
+          description: "Your new avatar has been saved.",
+        });
+       } else {
+         throw new Error(result.error || "Failed to update avatar.");
+       }
     } catch (error) {
       console.error("Failed to update avatar", error);
       toast({
@@ -76,16 +96,14 @@ export default function SidebarFooter({ user }: { user: User | null }) {
           <span className="text-muted-foreground text-xs">{user.email}</span>
         </div>
       </div>
-      <form action={signOut} className="w-full">
-        <Button
-          type="submit"
+      <Button
+          onClick={handleSignOut}
           variant="ghost"
           className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign Out</span>
         </Button>
-      </form>
     </FooterContainer>
   ) : (
     <FooterContainer className="p-4 border-t border-sidebar-border">

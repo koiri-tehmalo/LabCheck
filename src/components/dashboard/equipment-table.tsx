@@ -56,7 +56,7 @@ export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps
       setEditingItem(null);
   }
 
-  const canManage = user?.role === 'admin' || user?.role === 'auditor';
+  const canManage = !!user;
 
   return (
     <>

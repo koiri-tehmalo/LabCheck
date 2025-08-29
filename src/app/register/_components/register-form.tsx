@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { signUp } from "@/lib/actions";
+import { createUserDocument } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -40,18 +42,48 @@ export function RegisterForm() {
   });
 
   async function onSubmit(values: RegisterFormValues) {
-    const result = await signUp(values);
-    
-    if (result.success) {
-      toast({
-        title: "Account Created!",
-        description: "You can now sign in with your credentials.",
-      });
-      router.push('/login');
-    } else {
+    try {
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // 2. Update Firebase Auth profile
+      await updateProfile(user, { displayName: values.name });
+
+      // 3. Create user document in Firestore via Server Action
+      const result = await createUserDocument(user.uid, values.name, values.email);
+
+      if (result.success) {
+        toast({
+          title: "Account Created!",
+          description: "You can now sign in with your credentials.",
+        });
+        router.push('/login');
+      } else {
+        throw new Error(result.error || "Failed to create user profile in database.");
+      }
+
+    } catch (error: any) {
+      let errorMessage = "An unknown error occurred.";
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = "This email is already in use by another account.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "Please enter a valid email address.";
+            break;
+          case 'auth/weak-password':
+            errorMessage = "The password is too weak. Please use at least 6 characters.";
+            break;
+          default:
+            errorMessage = error.message;
+            break;
+        }
+      }
       toast({
         title: "Registration Failed",
-        description: result.error || "An unknown error occurred.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

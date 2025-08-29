@@ -1,17 +1,10 @@
 
-import { getUser, getUsers } from '@/lib/actions';
+'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserRoleClient } from '@/components/dashboard/user-role-client';
-import type { User } from '@/lib/types';
+import { User, ShieldAlert } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-
-export default async function UsersPage() {
-  const usersPromise = getUsers();
-  const currentUserPromise = getUser();
-
-  const [users, currentUser] = await Promise.all([usersPromise, currentUserPromise]);
+export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-8">
@@ -20,42 +13,27 @@ export default async function UsersPage() {
         <p className="text-muted-foreground">View and manage system users.</p>
       </div>
 
+       <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Feature Unavailable</AlertTitle>
+          <AlertDescription>
+           User management requires server-side admin privileges which have been disabled in the current app configuration. This page is for demonstration only.
+          </AlertDescription>
+        </Alert>
+
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>A list of all the users in the system.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className='w-[150px]'>Role</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user: User) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <UserRoleClient user={user} currentUser={currentUser} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+            <div className="h-64 flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg">
+                <User className="h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold text-muted-foreground">User list is unavailable</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    This feature requires server-side administrative access.
+                </p>
+            </div>
         </CardContent>
       </Card>
     </div>
