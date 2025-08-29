@@ -16,8 +16,7 @@ import {
   LayoutDashboard,
   HardDrive,
   Component,
-  FileText,
-  Users
+  FileText
 } from 'lucide-react';
 import Link from 'next/link';
 import SidebarFooter from '@/components/layout/sidebar-footer';
@@ -84,14 +83,6 @@ export default function RootLayout({
                           </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Users">
-                          <Link href="/dashboard/users">
-                            <Users />
-                            <span>Users</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarContent>
                 <SidebarFooter />
