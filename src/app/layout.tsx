@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   // User is now fetched on the client-side via AuthProvider
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="font-body antialiased bg-background">
         <AuthProvider>
           <SidebarProvider>
