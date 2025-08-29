@@ -1,13 +1,17 @@
 
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardDrive, TriangleAlert, CircleCheckBig, CircleHelp, Plus, Camera, FileText, Component, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
-import { getDashboardStats, getRecentActivity, getUser } from "@/lib/actions";
+import { getDashboardStats, getRecentActivity } from "@/lib/actions";
 import type { EquipmentItem, User } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/use-auth";
+import { useState, useEffect } from "react";
 
 
 type DashboardStats = {
@@ -18,16 +22,30 @@ type DashboardStats = {
   error?: string | null;
 }
 
-export default async function DashboardPage() {
-  const statsPromise = getDashboardStats();
-  const recentActivityPromise = getRecentActivity();
-  const userPromise = getUser();
+export default function DashboardPage() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0, error: null });
+  const [recentActivity, setRecentActivity] = useState<EquipmentItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [stats, recentActivity, user] = await Promise.all([
-    statsPromise,
-    recentActivityPromise,
-    userPromise
-  ]);
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      const statsPromise = getDashboardStats();
+      const recentActivityPromise = getRecentActivity();
+      
+      const [statsData, recentActivityData] = await Promise.all([
+        statsPromise,
+        recentActivityPromise,
+      ]);
+
+      setStats(statsData);
+      setRecentActivity(recentActivityData);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
   
   const { total, usable, broken, lost } = stats;
 
@@ -224,3 +242,5 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
+    
