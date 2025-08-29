@@ -61,7 +61,7 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
   useEffect(() => {
     // We can't know the full URL on the server, so we generate a relative one
     // and the QR code will point to that.
-    const assetUrl = `/dashboard/equipment/${item.id}`;
+    const assetUrl = `${window.location.origin}/dashboard/equipment/${item.id}`;
     generateQRCode(assetUrl).then(setQrCodeDataUrl);
   }, [item.id]);
   
