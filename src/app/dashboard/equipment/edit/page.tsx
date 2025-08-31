@@ -2,9 +2,16 @@ import { EquipmentForm } from "@/components/dashboard/equipment-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEquipmentItemById } from "@/lib/actions";
 import { notFound } from "next/navigation";
+import { use } from 'react';
 
-export default async function EditEquipmentPage({ params }: { params: { id: string } }) {
-  const item = await getEquipmentItemById(params.id);
+// Define a simple promise-based fetcher for server components
+async function fetchItem(id: string) {
+    return getEquipmentItemById(id);
+}
+
+export default function EditEquipmentPage({ params }: { params: { id: string } }) {
+  // Use React.use to resolve the promise, which is the modern way
+  const item = use(fetchItem(params.id));
 
   if (!item) {
     notFound();
