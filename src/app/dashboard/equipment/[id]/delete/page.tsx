@@ -1,12 +1,47 @@
-import { getEquipmentItemById } from '@/lib/actions';
+
+'use client';
+
 import { notFound } from 'next/navigation';
 import { DeleteConfirmationClient } from '@/components/dashboard/delete-confirmation-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { EquipmentItem } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function DeleteEquipmentPage({ params }: { params: { id: string } }) {
-  const item = await getEquipmentItemById(params.id);
+export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
+  const [item, setItem] = useState<EquipmentItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function getEquipmentItemById(id: string) {
+      const docRef = doc(db, "equipment", id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+         const data = docSnap.data();
+          setItem({
+            id: docSnap.id,
+            ...data,
+            purchaseDate: data.purchaseDate.toDate().toISOString(),
+          } as EquipmentItem);
+      }
+      setLoading(false);
+    }
+    getEquipmentItemById(params.id);
+  }, [params.id]);
+
+
+  if (loading) {
+    return (
+        <div className="max-w-2xl mx-auto space-y-4">
+             <Skeleton className="h-10 w-48" />
+             <Skeleton className="h-64 w-full" />
+        </div>
+    )
+  }
 
   if (!item) {
     notFound();

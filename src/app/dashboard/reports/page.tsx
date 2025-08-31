@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ServerCrash, Lock } from 'lucide-react';
-import { getEquipmentItems, getSetOptions } from '@/lib/actions';
 import * as XLSX from 'xlsx';
 import type { EquipmentItem, User } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -14,6 +13,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { StatusBadge } from '@/components/dashboard/status-badge';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
+    const data = snapshot.data();
+    return {
+        id: snapshot.id,
+        ...data,
+        purchaseDate: data.purchaseDate.toDate().toISOString(),
+    } as EquipmentItem;
+};
+
 
 export default function ReportsPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
@@ -23,7 +34,24 @@ export default function ReportsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    async function getEquipmentItems() {
+        const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(fromSnapshotToEquipmentItem);
+    }
+    
+    async function getSetOptions() {
+        const setsCollection = collection(db, "equipment_sets");
+        const q = query(setsCollection, orderBy("name"));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
+    }
+
     async function fetchData() {
+      if (!user) {
+        setDataLoading(false);
+        return;
+      }
       try {
         const itemsPromise = getEquipmentItems();
         const setsPromise = getSetOptions();
@@ -38,7 +66,7 @@ export default function ReportsPage() {
       }
     }
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleExport = () => {
     if (equipment.length === 0) return;
@@ -199,5 +227,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    

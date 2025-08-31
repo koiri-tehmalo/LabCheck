@@ -7,9 +7,8 @@ import { PlusCircle, Search } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { getEquipmentSets } from "@/lib/actions";
 import { useEffect, useState, useMemo } from "react";
-import type { EquipmentSet, User } from "@/lib/types";
+import type { EquipmentSet, EquipmentItem, User } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +21,18 @@ import { SetForm } from "@/components/dashboard/set-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+
+const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
+    const data = snapshot.data();
+    return {
+        id: snapshot.id,
+        ...data,
+        purchaseDate: data.purchaseDate.toDate().toISOString(),
+    } as EquipmentItem;
+};
 
 
 export default function SetsPage() {
@@ -33,15 +44,43 @@ export default function SetsPage() {
 
 
   const fetchSets = async () => {
+    if (!user) {
+        setSets([]);
+        setLoading(false);
+        return;
+    }
+
     setLoading(true);
-    const items = await getEquipmentSets();
-    setSets(items);
-    setLoading(false);
+    try {
+        const setsCollection = collection(db, "equipment_sets");
+        const setsSnapshot = await getDocs(setsCollection);
+        const setList = setsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as EquipmentSet[];
+
+        if (setList.length === 0) {
+            setSets([]);
+            setLoading(false);
+            return;
+        }
+
+        const allItemsSnapshot = await getDocs(collection(db, "equipment"));
+        const allItems = allItemsSnapshot.docs.map(fromSnapshotToEquipmentItem);
+
+        const setsWithItems = setList.map(set => ({
+            ...set,
+            items: allItems.filter(item => item.setId === set.id)
+        }));
+        setSets(setsWithItems);
+
+    } catch (error) {
+        console.error("Failed to fetch sets:", error);
+    } finally {
+        setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchSets();
-  }, []);
+  }, [user]);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);

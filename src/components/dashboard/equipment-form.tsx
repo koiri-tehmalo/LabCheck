@@ -34,8 +34,10 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentItem } from "@/lib/types"
-import { getSetOptions, saveEquipment, updateEquipment } from "@/lib/actions"
+import { saveEquipment, updateEquipment } from "@/lib/actions"
 import { useEffect, useState } from "react";
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const formSchema = z.object({
   assetId: z.string().min(1, { message: "Asset ID is required." }),
@@ -66,8 +68,11 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
 
   useEffect(() => {
     async function fetchSetOptions() {
-      const options = await getSetOptions();
-      setSetOptions(options);
+        const setsCollection = collection(db, "equipment_sets");
+        const q = query(setsCollection, orderBy("name"));
+        const querySnapshot = await getDocs(q);
+        const options = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
+        setSetOptions(options);
     }
     fetchSetOptions();
   }, []);

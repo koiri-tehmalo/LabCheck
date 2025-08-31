@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -52,34 +51,13 @@ const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
     } as EquipmentItem;
 };
 
-export async function getEquipmentItems(): Promise<EquipmentItem[]> {
-    try {
-        const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(fromSnapshotToEquipmentItem);
-    } catch (error: any) {
-        console.error('Firestore Error getting equipment items:', error.message);
-        return [];
-    }
-}
-
-export async function getEquipmentItemById(id: string): Promise<EquipmentItem | null> {
-    try {
-        const docRef = doc(db, "equipment", id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            return fromSnapshotToEquipmentItem(docSnap);
-        } else {
-            console.log("No such document!");
-            return null;
-        }
-    } catch (error: any) {
-        console.error(`Firestore Error getting equipment by ID ${id}:`, error.message);
-        return null;
-    }
-}
-
+// NOTE: All get... functions are being removed as they will be executed on the client.
+// export async function getEquipmentItems(): Promise<EquipmentItem[]> { ... }
+// export async function getEquipmentItemById(id: string): Promise<EquipmentItem | null> { ... }
+// export async function getDashboardStats() { ... }
+// export async function getRecentActivity(): Promise<EquipmentItem[]> { ... }
+// export async function getEquipmentSets(): Promise<EquipmentSet[]> { ... }
+// export async function getSetOptions(): Promise<{ id: string, name: string }[]> { ... }
 
 export async function saveEquipment(formData: FormData) {
     const rawData = {
@@ -166,64 +144,6 @@ export async function deleteEquipment(id: string) {
 }
 
 
-export async function getDashboardStats() {
-    try {
-        const equipmentCollection = collection(db, "equipment");
-        
-        const totalPromise = getDocs(equipmentCollection).then(snap => snap.size);
-        const usablePromise = getDocs(query(equipmentCollection, where("status", "==", "usable"))).then(snap => snap.size);
-        const brokenPromise = getDocs(query(equipmentCollection, where("status", "==", "broken"))).then(snap => snap.size);
-        const lostPromise = getDocs(query(equipmentCollection, where("status", "==", "lost"))).then(snap => snap.size);
-
-        const [total, usable, broken, lost] = await Promise.all([totalPromise, usablePromise, brokenPromise, lostPromise]);
-
-        return { total, usable, broken, lost, error: null };
-    } catch (error: any) {
-        console.error('Firestore Error getting dashboard stats:', error.message);
-        return {
-            total: 0,
-            usable: 0,
-            broken: 0,
-            lost: 0,
-            error: `Failed to connect to the database. Please check your configuration. (${error.code})`,
-        }
-    }
-}
-
-export async function getRecentActivity(): Promise<EquipmentItem[]> {
-    try {
-        const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"), limit(5));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(fromSnapshotToEquipmentItem);
-    } catch (error: any) {
-        console.error('Firestore Error getting recent activity:', error.message);
-        return [];
-    }
-}
-
-export async function getEquipmentSets(): Promise<EquipmentSet[]> {
-    try {
-        const setsCollection = collection(db, "equipment_sets");
-        const setsSnapshot = await getDocs(setsCollection);
-        const sets = setsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as EquipmentSet[];
-
-        if (sets.length === 0) {
-            return [];
-        }
-
-        const allItemsSnapshot = await getDocs(collection(db, "equipment"));
-        const allItems = allItemsSnapshot.docs.map(fromSnapshotToEquipmentItem);
-
-        return sets.map(set => ({
-            ...set,
-            items: allItems.filter(item => item.setId === set.id)
-        }));
-    } catch (error: any) {
-        console.error('Firestore Error getting equipment sets:', error.message);
-        return [];
-    }
-}
-
 export async function saveEquipmentSet(formData: FormData) {
     const validatedFields = setFormSchema.safeParse({
         name: formData.get('name'),
@@ -248,17 +168,6 @@ export async function saveEquipmentSet(formData: FormData) {
 // REMOVED getUser, getUsers, updateUserRole as they require Admin SDK.
 // User state will be managed on the client.
 
-export async function getSetOptions(): Promise<{ id: string, name: string }[]> {
-    try {
-        const setsCollection = collection(db, "equipment_sets");
-        const q = query(setsCollection, orderBy("name"));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
-    } catch (error: any) {
-        console.error('Firestore Error getting set options:', error.message);
-        return [];
-    }
-}
 
 export async function signOut() {
     // This server action is now primarily for redirecting.
@@ -346,3 +255,16 @@ export async function createUserDocument(userId: string, name: string, email: st
         return { success: false, error: "Failed to create user profile." };
     }
 }
+// Client-side data fetching functions that were previously in actions.ts
+// These will be used in client components with hooks.
+// It is better to co-locate these with the components, so we will not keep them here.
+// But for reference, this is how you would fetch data on the client:
+
+/*
+import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { db } from './firebase'; // Make sure this points to your client-side firebase config
+
+export async function getDashboardStatsClient() {
+    // Implementation here
+}
+*/

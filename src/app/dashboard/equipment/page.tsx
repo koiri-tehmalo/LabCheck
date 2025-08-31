@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
 import { EquipmentTable } from "@/components/dashboard/equipment-table";
-import { getEquipmentItems } from "@/lib/actions";
 import { useState, useEffect, useMemo } from "react";
 import type { EquipmentItem, User } from "@/lib/types";
 import {
@@ -18,6 +17,18 @@ import {
 } from "@/components/ui/dialog";
 import { EquipmentForm } from "@/components/dashboard/equipment-form";
 import { useAuth } from "@/hooks/use-auth";
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
+    const data = snapshot.data();
+    return {
+        id: snapshot.id,
+        ...data,
+        purchaseDate: data.purchaseDate.toDate().toISOString(),
+    } as EquipmentItem;
+};
+
 
 export default function EquipmentPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
@@ -27,15 +38,23 @@ export default function EquipmentPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchEquipment = async () => {
+    if (!user) {
+        setEquipment([]);
+        setLoading(false);
+        return;
+    };
+    
     setLoading(true);
-    const items = await getEquipmentItems();
+    const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"));
+    const querySnapshot = await getDocs(q);
+    const items = querySnapshot.docs.map(fromSnapshotToEquipmentItem);
     setEquipment(items);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchEquipment();
-  }, []);
+  }, [user]);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
@@ -96,5 +115,3 @@ export default function EquipmentPage() {
     </div>
   );
 }
-
-    

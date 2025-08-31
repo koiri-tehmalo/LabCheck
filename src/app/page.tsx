@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
-import { getDashboardStats, getRecentActivity } from "@/lib/actions";
 import type { EquipmentItem, User } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
+import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 type DashboardStats = {
@@ -22,6 +23,17 @@ type DashboardStats = {
   error?: string | null;
 }
 
+// Helper to convert Firestore snapshot to EquipmentItem
+const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
+    const data = snapshot.data();
+    return {
+        id: snapshot.id,
+        ...data,
+        purchaseDate: data.purchaseDate.toDate().toISOString(),
+    } as EquipmentItem;
+};
+
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0, error: null });
@@ -29,22 +41,53 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function getDashboardStats() {
+        try {
+            const equipmentCollection = collection(db, "equipment");
+            
+            const totalPromise = getDocs(equipmentCollection).then(snap => snap.size);
+            const usablePromise = getDocs(query(equipmentCollection, where("status", "==", "usable"))).then(snap => snap.size);
+            const brokenPromise = getDocs(query(equipmentCollection, where("status", "==", "broken"))).then(snap => snap.size);
+            const lostPromise = getDocs(query(equipmentCollection, where("status", "==", "lost"))).then(snap => snap.size);
+
+            const [total, usable, broken, lost] = await Promise.all([totalPromise, usablePromise, brokenPromise, lostPromise]);
+
+            setStats({ total, usable, broken, lost, error: null });
+        } catch (error: any) {
+            console.error('Firestore Error getting dashboard stats:', error.message);
+            setStats(prev => ({ ...prev, error: `Failed to connect to the database. Please check your configuration. (${error.code})`}))
+        }
+    }
+
+    async function getRecentActivity() {
+      try {
+          const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"), limit(5));
+          const querySnapshot = await getDocs(q);
+          setRecentActivity(querySnapshot.docs.map(fromSnapshotToEquipmentItem));
+      } catch (error: any) {
+          console.error('Firestore Error getting recent activity:', error.message);
+      }
+    }
+
     async function fetchData() {
       setLoading(true);
-      const statsPromise = getDashboardStats();
-      const recentActivityPromise = getRecentActivity();
-      
-      const [statsData, recentActivityData] = await Promise.all([
-        statsPromise,
-        recentActivityPromise,
+      await Promise.all([
+        getDashboardStats(),
+        getRecentActivity(),
       ]);
-
-      setStats(statsData);
-      setRecentActivity(recentActivityData);
       setLoading(false);
     }
-    fetchData();
-  }, []);
+    
+    // We only fetch data if a user is logged in
+    if (user) {
+      fetchData();
+    } else {
+      // If no user, maybe you want to clear stats or show a login prompt
+      setLoading(false);
+      setStats({ total: 0, usable: 0, broken: 0, lost: 0, error: "Please log in to view dashboard statistics." });
+      setRecentActivity([]);
+    }
+  }, [user]); // Rerun when user state changes
 
   
   const { total, usable, broken, lost } = stats;
@@ -242,5 +285,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
