@@ -15,10 +15,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { createUserDocument } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -43,25 +43,29 @@ export function RegisterForm() {
 
   async function onSubmit(values: RegisterFormValues) {
     try {
-      // 1. Create user in Firebase Auth
+      // 1. Create user in Firebase Auth. This automatically signs the user in.
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // 2. Update Firebase Auth profile
+      // 2. Update Firebase Auth profile with the user's name.
       await updateProfile(user, { displayName: values.name });
 
-      // 3. Create user document in Firestore via Server Action
-      const result = await createUserDocument(user.uid, values.name, values.email);
+      // 3. Create the user document in Firestore.
+      // This now runs on the client-side, authenticated as the new user,
+      // so it will pass the security rules.
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, {
+          name: values.name,
+          email: values.email,
+          avatar: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}`,
+          createdAt: new Date().toISOString(),
+      });
 
-      if (result.success) {
-        toast({
-          title: "Account Created!",
-          description: "You can now sign in with your credentials.",
-        });
-        router.push('/login');
-      } else {
-        throw new Error(result.error || "Failed to create user profile in database.");
-      }
+      toast({
+        title: "Account Created!",
+        description: "You can now sign in with your credentials.",
+      });
+      router.push('/login');
 
     } catch (error: any) {
       let errorMessage = "An unknown error occurred.";
@@ -77,10 +81,11 @@ export function RegisterForm() {
             errorMessage = "The password is too weak. Please use at least 6 characters.";
             break;
           default:
-            errorMessage = error.message;
+            errorMessage = `Registration failed: ${error.message}`;
             break;
         }
       }
+      console.error("Registration Error: ", error);
       toast({
         title: "Registration Failed",
         description: errorMessage,
