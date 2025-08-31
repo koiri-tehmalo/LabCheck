@@ -230,25 +230,3 @@ export async function createUserDocument(userId: string, name: string, email: st
         return { success: false, error: "Failed to create user profile." };
     }
 }
-
-export async function updateEquipmentStatus(id: string, status: EquipmentStatus) {
-    const statusSchema = z.enum(['usable', 'broken', 'lost']);
-    const validatedStatus = statusSchema.safeParse(status);
-
-    if (!validatedStatus.success) {
-        console.error('Validation errors:', validatedStatus.error.flatten().fieldErrors);
-        return { success: false, error: 'Invalid status provided.' };
-    }
-
-    try {
-        const docRef = doc(db, "equipment", id);
-        await updateDoc(docRef, { status: validatedStatus.data });
-        revalidatePath(`/dashboard/equipment/${id}`);
-        revalidatePath(`/dashboard`);
-        revalidatePath(`/dashboard/equipment`);
-        return { success: true };
-    } catch (error: any) {
-        console.error('Firestore Error updating status:', error.message);
-        return { success: false, error: 'Failed to update status.' };
-    }
-}

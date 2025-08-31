@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CircleCheckBig, TriangleAlert, CircleHelp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateEquipmentStatus } from '@/lib/actions';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ReportStatusClientProps {
     item: EquipmentItem;
@@ -22,21 +23,25 @@ export function ReportStatusClient({ item, setItem }: ReportStatusClientProps) {
         if (item.status === newStatus) return;
 
         setLoadingStatus(newStatus);
-        const result = await updateEquipmentStatus(item.id, newStatus);
-        setLoadingStatus(null);
+        
+        try {
+            const docRef = doc(db, "equipment", item.id);
+            await updateDoc(docRef, { status: newStatus });
 
-        if (result.success) {
             setItem({ ...item, status: newStatus });
             toast({
                 title: 'Status Updated',
                 description: `Successfully marked "${item.name}" as ${newStatus}.`,
             });
-        } else {
+        } catch (error: any) {
+            console.error("Firestore Error updating status:", error);
             toast({
                 title: 'Error',
-                description: result.error || 'Failed to update status.',
+                description: 'Failed to update status. Please check your connection or permissions.',
                 variant: 'destructive',
             });
+        } finally {
+            setLoadingStatus(null);
         }
     };
     
