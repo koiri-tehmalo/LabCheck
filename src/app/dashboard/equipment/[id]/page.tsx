@@ -13,11 +13,12 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
   const [item, setItem] = useState<EquipmentItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const { id } = params;
 
   useEffect(() => {
-    async function getEquipmentItemById(id: string) {
+    async function getEquipmentItemById(itemId: string) {
       try {
-        const docRef = doc(db, "equipment", id);
+        const docRef = doc(db, "equipment", itemId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -38,10 +39,10 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
       }
     }
 
-    if (params.id) {
-      getEquipmentItemById(params.id);
+    if (id) {
+      getEquipmentItemById(id);
     }
-  }, [params.id]);
+  }, [id]);
 
   if (loading) {
     return (

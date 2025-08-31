@@ -13,10 +13,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function EditEquipmentPage({ params }: { params: { id: string } }) {
   const [item, setItem] = useState<EquipmentItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const { id } = params;
 
   useEffect(() => {
-    async function getEquipmentItemById(id: string) {
-      const docRef = doc(db, "equipment", id);
+    async function getEquipmentItemById(itemId: string) {
+      const docRef = doc(db, "equipment", itemId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
           const data = docSnap.data();
@@ -28,8 +29,10 @@ export default function EditEquipmentPage({ params }: { params: { id: string } }
       }
       setLoading(false);
     }
-    getEquipmentItemById(params.id);
-  }, [params.id]);
+    if (id) {
+      getEquipmentItemById(id);
+    }
+  }, [id]);
 
   if (loading) {
     return (
