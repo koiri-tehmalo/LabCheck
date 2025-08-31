@@ -1,3 +1,4 @@
+
 'use client';
 
 import { notFound } from 'next/navigation';
@@ -66,7 +67,7 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
   }, [item.id]);
   
   return (
-    <div className="flex flex-col gap-8 print:gap-4 printable-area">
+    <div className="flex flex-col gap-4 md:gap-8 print:gap-4 printable-area">
        <div className="print:hidden">
         <Button variant="outline" asChild>
             <Link href="/dashboard/equipment">
@@ -76,13 +77,13 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
         </Button>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3 print:grid-cols-1">
-        <div className="md:col-span-2 space-y-8 print:col-span-1">
+      <div className="grid gap-4 md:gap-8 md:grid-cols-3 print:grid-cols-1">
+        <div className="md:col-span-2 space-y-4 md:space-y-8 print:col-span-1">
             <Card className="print:shadow-none print:border-none">
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
-                            <CardTitle className="text-2xl print:text-xl">{item.name}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl print:text-xl">{item.name}</CardTitle>
                             <CardDescription>{item.model}</CardDescription>
                         </div>
                         <StatusBadge status={item.status} />
@@ -110,7 +111,7 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
                         )}
                          <div>
                             <p className="font-medium text-muted-foreground">Document ID</p>
-                            <p className="text-xs font-mono">{item.id}</p>
+                            <p className="text-xs font-mono break-all">{item.id}</p>
                         </div>
                     </div>
                     {item.notes && (

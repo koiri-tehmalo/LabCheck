@@ -138,8 +138,8 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid md:grid-cols-2 gap-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <FormField
             control={form.control}
             name="assetId"
@@ -218,7 +218,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             control={form.control}
             name="purchaseDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col pt-2">
                 <FormLabel>Purchase Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>

@@ -61,14 +61,15 @@ export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps
   return (
     <>
       <div className="rounded-lg border">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>หมายเลขครุภัณฑ์</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Purchase Date</TableHead>
+              <TableHead className="hidden md:table-cell">Location</TableHead>
+              <TableHead className="hidden sm:table-cell">Purchase Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -80,13 +81,13 @@ export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps
                   <Link href={`/dashboard/equipment/${item.id}`} className="hover:underline">
                     {item.name}
                   </Link>
-                  <div className="text-xs text-muted-foreground">{item.model}</div>
+                  <div className="text-xs text-muted-foreground hidden sm:block">{item.model}</div>
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={item.status} />
                 </TableCell>
-                <TableCell>{item.location}</TableCell>
-                <TableCell>{new Date(item.purchaseDate).toLocaleDateString()}</TableCell>
+                <TableCell className="hidden md:table-cell">{item.location}</TableCell>
+                <TableCell className="hidden sm:table-cell">{new Date(item.purchaseDate).toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -120,6 +121,7 @@ export function EquipmentTable({ data, onDataChange, user }: EquipmentTableProps
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
       <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent className="sm:max-w-[625px]">

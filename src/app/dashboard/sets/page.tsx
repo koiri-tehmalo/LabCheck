@@ -94,16 +94,16 @@ export default function SetsPage() {
 
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 md:gap-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Equipment Sets</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Equipment Sets</h1>
           <p className="text-muted-foreground">Manage groups of related equipment.</p>
         </div>
         {canManage && (
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create New Set
                 </Button>

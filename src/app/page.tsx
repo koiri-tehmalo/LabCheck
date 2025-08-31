@@ -105,13 +105,13 @@ export default function DashboardPage() {
   const welcomeName = user ? user.name : 'Guest';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       {/* Welcome Section */}
       <Card className="bg-primary text-primary-foreground">
-        <CardContent className="p-6 flex justify-between items-center">
+        <CardContent className="p-4 md:p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold">Welcome, {welcomeName}!</h2>
-            <p className="opacity-80">
+            <h2 className="text-xl md:text-2xl font-bold">Welcome, {welcomeName}!</h2>
+            <p className="opacity-80 text-sm md:text-base">
               {new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -121,7 +121,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="p-3 bg-primary-foreground/20 rounded-lg">
-            <HardDrive className="h-8 w-8 text-white" />
+            <HardDrive className="h-6 w-6 md:h-8 md:w-8 text-white" />
           </div>
         </CardContent>
       </Card>
@@ -139,43 +139,43 @@ export default function DashboardPage() {
       {/* Stats Cards in a Table */}
       <Card>
           <CardHeader>
-              <CardTitle>Asset Status Summary</CardTitle>
+              <CardTitle className="text-xl">Asset Status Summary</CardTitle>
           </CardHeader>
           <CardContent>
               <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                       <thead className="text-xs text-muted-foreground uppercase bg-secondary">
                           <tr>
-                              <th scope="col" className="px-6 py-3">สถานะ</th>
-                              <th scope="col" className="px-6 py-3">จำนวน</th>
-                              <th scope="col" className="px-6 py-3">คำอธิบาย</th>
-                              <th scope="col" className="px-6 py-3 text-center">สัญลักษณ์</th>
+                              <th scope="col" className="px-4 md:px-6 py-3">สถานะ</th>
+                              <th scope="col" className="px-4 md:px-6 py-3">จำนวน</th>
+                              <th scope="col" className="px-4 md:px-6 py-3 hidden sm:table-cell">คำอธิบาย</th>
+                              <th scope="col" className="px-4 md:px-6 py-3 text-center">สัญลักษณ์</th>
                           </tr>
                       </thead>
                       <tbody>
                           <tr className="border-b">
-                              <td className="px-6 py-4 font-medium">Total Assets</td>
-                              <td className="px-6 py-4">{total}</td>
-                              <td className="px-6 py-4 text-muted-foreground">All items in inventory</td>
-                              <td className="px-6 py-4 flex justify-center"><HardDrive className="h-5 w-5"/></td>
+                              <td className="px-4 md:px-6 py-4 font-medium">Total Assets</td>
+                              <td className="px-4 md:px-6 py-4">{total}</td>
+                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">All items in inventory</td>
+                              <td className="px-4 md:px-6 py-4 flex justify-center"><HardDrive className="h-5 w-5"/></td>
                           </tr>
                           <tr className="border-b bg-green-500/10">
-                              <td className="px-6 py-4 font-medium">Usable Assets</td>
-                              <td className="px-6 py-4">{usable}</td>
-                              <td className="px-6 py-4 text-muted-foreground">Items ready for use</td>
-                              <td className="px-6 py-4 flex justify-center"><CircleCheckBig className="h-5 w-5 text-green-600"/></td>
+                              <td className="px-4 md:px-6 py-4 font-medium">Usable Assets</td>
+                              <td className="px-4 md:px-6 py-4">{usable}</td>
+                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">Items ready for use</td>
+                              <td className="px-4 md:px-6 py-4 flex justify-center"><CircleCheckBig className="h-5 w-5 text-green-600"/></td>
                           </tr>
                           <tr className="border-b bg-orange-500/10">
-                              <td className="px-6 py-4 font-medium">Broken Assets</td>
-                              <td className="px-6 py-4">{broken}</td>
-                              <td className="px-6 py-4 text-muted-foreground">Items needing repair</td>
-                              <td className="px-6 py-4 flex justify-center"><TriangleAlert className="h-5 w-5 text-orange-600"/></td>
+                              <td className="px-4 md:px-6 py-4 font-medium">Broken Assets</td>
+                              <td className="px-4 md:px-6 py-4">{broken}</td>
+                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">Items needing repair</td>
+                              <td className="px-4 md:px-6 py-4 flex justify-center"><TriangleAlert className="h-5 w-5 text-orange-600"/></td>
                           </tr>
                           <tr className="bg-red-500/10">
-                              <td className="px-6 py-4 font-medium">Lost Assets</td>
-                              <td className="px-6 py-4">{lost}</td>
-                              <td className="px-6 py-4 text-muted-foreground">Missing items</td>
-                              <td className="px-6 py-4 flex justify-center"><CircleHelp className="h-5 w-5 text-red-600"/></td>
+                              <td className="px-4 md:px-6 py-4 font-medium">Lost Assets</td>
+                              <td className="px-4 md:px-6 py-4">{lost}</td>
+                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">Missing items</td>
+                              <td className="px-4 md:px-6 py-4 flex justify-center"><CircleHelp className="h-5 w-5 text-red-600"/></td>
                           </tr>
                       </tbody>
                   </table>
@@ -187,28 +187,28 @@ export default function DashboardPage() {
        { user && (
         <Card>
             <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="text-xl">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="flex-col h-24" asChild>
+            <Button variant="outline" className="flex-col h-24 text-center" asChild>
                 <Link href="/dashboard/equipment">
                 <Plus className="h-6 w-6 mb-1" />
                 <span>Add Asset</span>
                 </Link>
             </Button>
-            <Button variant="outline" className="flex-col h-24" asChild>
+            <Button variant="outline" className="flex-col h-24 text-center" asChild>
                 <Link href="/dashboard/equipment">
                 <Camera className="h-6 w-6 mb-1" />
                 <span>Scan Equipment</span>
                 </Link>
             </Button>
-            <Button variant="outline" className="flex-col h-24" asChild>
+            <Button variant="outline" className="flex-col h-24 text-center" asChild>
                 <Link href="/dashboard/reports">
                 <FileText className="h-6 w-6 mb-1" />
                 <span>Generate Report</span>
                 </Link>
             </Button>
-            <Button variant="outline" className="flex-col h-24" asChild>
+            <Button variant="outline" className="flex-col h-24 text-center" asChild>
                 <Link href="/dashboard/sets">
                 <Component className="h-6 w-6 mb-1" />
                 <span>Equipment Sets</span>
@@ -218,11 +218,11 @@ export default function DashboardPage() {
         </Card>
        )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-6 lg:grid-cols-5">
         {/* Recent Activity */}
         <Card className="lg:col-span-3">
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle className="text-xl">Recent Activity</CardTitle>
                  <Button variant="link" asChild>
                     <Link href="/dashboard/equipment">View all →</Link>
                 </Button>
@@ -233,7 +233,7 @@ export default function DashboardPage() {
                         <thead className="text-xs text-muted-foreground uppercase">
                            <tr>
                                <th className="pb-2">Asset Name</th>
-                               <th className="pb-2">Date Added</th>
+                               <th className="pb-2 hidden sm:table-cell">Date Added</th>
                                <th className="pb-2 text-right">Status</th>
                            </tr>
                         </thead>
@@ -247,7 +247,7 @@ export default function DashboardPage() {
                                             </Link>
                                             <div className="text-xs text-muted-foreground">{item.assetId}</div>
                                         </td>
-                                        <td className="py-2">{new Date(item.purchaseDate).toLocaleDateString()}</td>
+                                        <td className="py-2 hidden sm:table-cell">{new Date(item.purchaseDate).toLocaleDateString()}</td>
                                         <td className="py-2 text-right"><StatusBadge status={item.status} /></td>
                                     </tr>
                                 ))
@@ -267,7 +267,7 @@ export default function DashboardPage() {
         {/* Status Overview Chart */}
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Overview</CardTitle>
+                <CardTitle className="text-xl">Overview</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {statsForChart.map(({ label, count, color }) => {

@@ -33,7 +33,7 @@ export default function EditEquipmentPage({ params }: { params: { id: string } }
 
   if (loading) {
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4 md:gap-8">
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-1/4" />
@@ -59,7 +59,7 @@ export default function EditEquipmentPage({ params }: { params: { id: string } }
   }
   
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4 md:gap-8">
        <Card>
         <CardHeader>
           <CardTitle>Edit Equipment</CardTitle>

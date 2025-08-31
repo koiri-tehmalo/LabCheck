@@ -111,7 +111,7 @@ export default function ReportsPage() {
 
   if (loading) {
      return (
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-8">
             <Skeleton className="h-8 w-1/4" />
             <Skeleton className="h-4 w-1/2" />
             <Card>
@@ -123,15 +123,15 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4 md:gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Reports</h1>
         <p className="text-muted-foreground">Generate and view equipment reports.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className='flex items-center gap-3'>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <FileText className="h-6 w-6 text-primary" />
@@ -142,12 +142,12 @@ export default function ReportsPage() {
               </div>
             </div>
             { user ? (
-                <Button onClick={handleExport} disabled={equipment.length === 0 || loading}>
+                <Button onClick={handleExport} disabled={equipment.length === 0 || loading} className="w-full md:w-auto">
                   <Download className="mr-2 h-4 w-4" />
                   Export to Excel
                 </Button>
             ) : (
-                 <Button disabled>
+                 <Button disabled  className="w-full md:w-auto">
                     <Lock className="mr-2 h-4 w-4" />
                     Login to Export
                  </Button>
@@ -180,14 +180,15 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
            <div className="rounded-lg border">
+            <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>หมายเลขครุภัณฑ์</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Location</TableHead>
-                            <TableHead>Purchase Date</TableHead>
+                            <TableHead className="hidden md:table-cell">Location</TableHead>
+                            <TableHead className="hidden sm:table-cell">Purchase Date</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -196,8 +197,8 @@ export default function ReportsPage() {
                                 <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
                                 <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                                 <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-[90px]" /></TableCell>
+                                <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-[90px]" /></TableCell>
                              </TableRow>
                         ))}
                         {!loading && equipment.slice(0, 10).map((item) => (
@@ -205,8 +206,8 @@ export default function ReportsPage() {
                                 <TableCell className="font-medium">{item.assetId}</TableCell>
                                 <TableCell>{item.name}</TableCell>
                                 <TableCell><StatusBadge status={item.status} /></TableCell>
-                                <TableCell>{item.location}</TableCell>
-                                <TableCell>{new Date(item.purchaseDate).toLocaleDateString()}</TableCell>
+                                <TableCell className="hidden md:table-cell">{item.location}</TableCell>
+                                <TableCell className="hidden sm:table-cell">{new Date(item.purchaseDate).toLocaleDateString()}</TableCell>
                             </TableRow>
                         ))}
                          {!loading && equipment.length === 0 && (
@@ -218,6 +219,7 @@ export default function ReportsPage() {
                         )}
                     </TableBody>
                 </Table>
+            </div>
             </div>
         </CardContent>
       </Card>

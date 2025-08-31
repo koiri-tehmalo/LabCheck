@@ -75,13 +75,13 @@ export default function EquipmentPage() {
   }, [equipment, searchTerm]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4 md:gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">รายการครุภัณฑ์</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">รายการครุภัณฑ์</h1>
         <p className="text-muted-foreground">จัดการครุภัณฑ์ทั้งหมดของคุณ.</p>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
@@ -94,7 +94,7 @@ export default function EquipmentPage() {
         {canManage && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Equipment
               </Button>

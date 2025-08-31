@@ -45,9 +45,9 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
 
   if (loading) {
     return (
-        <div className="space-y-8">
+        <div className="space-y-4 md:space-y-8">
             <Skeleton className="h-10 w-48" />
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="grid gap-4 md:gap-8 md:grid-cols-3">
                 <div className="md:col-span-2 space-y-4">
                     <Skeleton className="h-32 w-full" />
                     <Skeleton className="h-24 w-full" />
