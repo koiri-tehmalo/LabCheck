@@ -109,10 +109,6 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
                                 <p>{item.setId}</p>
                             </div>
                         )}
-                         <div>
-                            <p className="font-medium text-muted-foreground">Document ID</p>
-                            <p className="text-xs font-mono break-all">{item.id}</p>
-                        </div>
                     </div>
                     {item.notes && (
                          <div className="mt-6">
