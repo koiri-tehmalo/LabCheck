@@ -29,7 +29,7 @@ const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
 export default function ReportsPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [setOptions, setSetOptions] = useState<{ id: string; name: string }[]>([]);
-  const { user, loading: userLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,25 +48,29 @@ export default function ReportsPage() {
     }
 
     async function fetchData() {
-      if (!user) {
-        setDataLoading(false);
-        return;
-      }
+      setDataLoading(true);
       try {
         const itemsPromise = getEquipmentItems();
         const setsPromise = getSetOptions();
         const [items, sets] = await Promise.all([itemsPromise, setsPromise]);
         setEquipment(items);
         setSetOptions(sets);
-      } catch (e) {
-        setError('Failed to load data.');
+      } catch (e: any) {
+        if (e.code === 'permission-denied') {
+          setError('Public access denied. Please update Firestore security rules to allow reads.');
+        } else {
+          setError('Failed to load data.');
+        }
         console.error(e);
       } finally {
         setDataLoading(false);
       }
     }
-    fetchData();
-  }, [user]);
+
+    if (!authLoading) {
+      fetchData();
+    }
+  }, [authLoading]);
 
   const handleExport = () => {
     if (equipment.length === 0) return;
@@ -103,7 +107,7 @@ export default function ReportsPage() {
     XLSX.writeFile(workbook, "Equipment_Report.xlsx");
   };
 
-  const loading = userLoading || dataLoading;
+  const loading = authLoading || dataLoading;
 
   if (loading) {
      return (
@@ -117,22 +121,6 @@ export default function ReportsPage() {
         </div>
      )
   }
-
-  if (!user) {
-    return (
-        <Card className="mt-8">
-            <CardContent className="py-12 flex flex-col items-center justify-center text-center">
-                <Lock className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold">Access Denied</h3>
-                <p className="text-muted-foreground mt-2">You must be logged in to view reports.</p>
-                <Button asChild className="mt-6">
-                    <Link href="/login">Sign In</Link>
-                </Button>
-            </CardContent>
-        </Card>
-    )
-  }
-
 
   return (
     <div className="flex flex-col gap-8">
@@ -153,10 +141,17 @@ export default function ReportsPage() {
                 <CardDescription>Export a complete list of all equipment assets.</CardDescription>
               </div>
             </div>
-            <Button onClick={handleExport} disabled={equipment.length === 0 || loading}>
-              <Download className="mr-2 h-4 w-4" />
-              Export to Excel
-            </Button>
+            { user ? (
+                <Button onClick={handleExport} disabled={equipment.length === 0 || loading}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export to Excel
+                </Button>
+            ) : (
+                 <Button disabled>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Login to Export
+                 </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -167,10 +162,12 @@ export default function ReportsPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          {!loading && !error && (
+          {!error && (
             <p className="text-sm text-muted-foreground">
-              Click the button above to download the full equipment inventory report as an .xlsx file.
-              This file can be opened with Microsoft Excel, Google Sheets, or other spreadsheet software.
+              { user ? 
+                'Click the button above to download the full equipment inventory report as an .xlsx file.' :
+                'Please sign in to export the inventory report.'
+              }
             </p>
           )}
         </CardContent>

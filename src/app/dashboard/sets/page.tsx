@@ -39,17 +39,11 @@ export default function SetsPage() {
   const [sets, setSets] = useState<EquipmentSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
 
   const fetchSets = async () => {
-    if (!user) {
-        setSets([]);
-        setLoading(false);
-        return;
-    }
-
     setLoading(true);
     try {
         const setsCollection = collection(db, "equipment_sets");
@@ -79,8 +73,10 @@ export default function SetsPage() {
   };
 
   useEffect(() => {
-    fetchSets();
-  }, [user]);
+    if (!authLoading) {
+        fetchSets();
+    }
+  }, [authLoading]);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
@@ -181,7 +177,7 @@ export default function SetsPage() {
               </Card>
             ))}
           </div>
-          {filteredSets.length === 0 && (
+          {filteredSets.length === 0 && !loading && (
             <Card>
               <CardContent className="py-12 text-center">
                 <h3 className="text-lg font-medium text-muted-foreground">No Equipment Sets Found</h3>

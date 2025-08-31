@@ -19,6 +19,7 @@ import { EquipmentForm } from "@/components/dashboard/equipment-form";
 import { useAuth } from "@/hooks/use-auth";
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
     const data = snapshot.data();
@@ -34,42 +35,42 @@ export default function EquipmentPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchEquipment = async () => {
-    if (!user) {
-        setEquipment([]);
-        setLoading(false);
-        return;
-    };
-    
     setLoading(true);
-    const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"));
-    const querySnapshot = await getDocs(q);
-    const items = querySnapshot.docs.map(fromSnapshotToEquipmentItem);
-    setEquipment(items);
-    setLoading(false);
+    try {
+      const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"));
+      const querySnapshot = await getDocs(q);
+      const items = querySnapshot.docs.map(fromSnapshotToEquipmentItem);
+      setEquipment(items);
+    } catch (error) {
+      console.error("Failed to fetch equipment:", error);
+      // You might want to show a toast or an error message here
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchEquipment();
-  }, [user]);
+    if (!authLoading) {
+      fetchEquipment();
+    }
+  }, [authLoading]);
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
     fetchEquipment(); // Refresh data
   };
   
-  // Role-based access is simplified as we no longer have reliable roles from the server.
-  // We can just check if the user is logged in.
   const canManage = !!user;
 
   const filteredEquipment = useMemo(() => {
     if (!searchTerm) return equipment;
     return equipment.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.assetId.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.assetId && item.assetId.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [equipment, searchTerm]);
 
@@ -111,7 +112,16 @@ export default function EquipmentPage() {
         )}
       </div>
       
-      {loading ? <p>Loading equipment...</p> : <EquipmentTable data={filteredEquipment} onDataChange={fetchEquipment} user={user} />}
+      {loading ? (
+        <div className="border rounded-lg p-4">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        </div>
+       ) : <EquipmentTable data={filteredEquipment} onDataChange={fetchEquipment} user={user} />}
     </div>
   );
 }

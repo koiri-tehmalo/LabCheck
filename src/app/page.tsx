@@ -35,7 +35,7 @@ const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
 
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0, error: null });
   const [recentActivity, setRecentActivity] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,13 @@ export default function DashboardPage() {
             setStats({ total, usable, broken, lost, error: null });
         } catch (error: any) {
             console.error('Firestore Error getting dashboard stats:', error.message);
-            setStats(prev => ({ ...prev, error: `Failed to connect to the database. Please check your configuration. (${error.code})`}))
+            // Assuming this is a permissions error for guests, we can handle it gracefully.
+            // For logged-in users, it might be a real issue.
+            if (error.code === 'permission-denied') {
+                 setStats(prev => ({ ...prev, error: `Please update Firestore rules to allow public read access.`}))
+            } else {
+                 setStats(prev => ({ ...prev, error: `Failed to connect to the database. (${error.code})`}))
+            }
         }
     }
 
@@ -64,8 +70,10 @@ export default function DashboardPage() {
           const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"), limit(5));
           const querySnapshot = await getDocs(q);
           setRecentActivity(querySnapshot.docs.map(fromSnapshotToEquipmentItem));
-      } catch (error: any) {
+      } catch (error: any)
+      {
           console.error('Firestore Error getting recent activity:', error.message);
+          // Don't set an error for this, the table will just be empty.
       }
     }
 
@@ -78,16 +86,12 @@ export default function DashboardPage() {
       setLoading(false);
     }
     
-    // We only fetch data if a user is logged in
-    if (user) {
+    // Data is fetched regardless of user state now.
+    // Auth loading is checked to prevent fetching before auth state is known.
+    if (!authLoading) {
       fetchData();
-    } else {
-      // If no user, maybe you want to clear stats or show a login prompt
-      setLoading(false);
-      setStats({ total: 0, usable: 0, broken: 0, lost: 0, error: "Please log in to view dashboard statistics." });
-      setRecentActivity([]);
     }
-  }, [user]); // Rerun when user state changes
+  }, [authLoading]);
 
   
   const { total, usable, broken, lost } = stats;
@@ -180,37 +184,39 @@ export default function DashboardPage() {
       </Card>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/dashboard/equipment">
-              <Plus className="h-6 w-6 mb-1" />
-              <span>Add Asset</span>
-            </Link>
-          </Button>
-          <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/dashboard/equipment">
-              <Camera className="h-6 w-6 mb-1" />
-              <span>Scan Equipment</span>
-            </Link>
-          </Button>
-          <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/dashboard/reports">
-              <FileText className="h-6 w-6 mb-1" />
-              <span>Generate Report</span>
-            </Link>
-          </Button>
-          <Button variant="outline" className="flex-col h-24" asChild>
-            <Link href="/dashboard/sets">
-              <Component className="h-6 w-6 mb-1" />
-              <span>Equipment Sets</span>
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+       { user && (
+        <Card>
+            <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button variant="outline" className="flex-col h-24" asChild>
+                <Link href="/dashboard/equipment">
+                <Plus className="h-6 w-6 mb-1" />
+                <span>Add Asset</span>
+                </Link>
+            </Button>
+            <Button variant="outline" className="flex-col h-24" asChild>
+                <Link href="/dashboard/equipment">
+                <Camera className="h-6 w-6 mb-1" />
+                <span>Scan Equipment</span>
+                </Link>
+            </Button>
+            <Button variant="outline" className="flex-col h-24" asChild>
+                <Link href="/dashboard/reports">
+                <FileText className="h-6 w-6 mb-1" />
+                <span>Generate Report</span>
+                </Link>
+            </Button>
+            <Button variant="outline" className="flex-col h-24" asChild>
+                <Link href="/dashboard/sets">
+                <Component className="h-6 w-6 mb-1" />
+                <span>Equipment Sets</span>
+                </Link>
+            </Button>
+            </CardContent>
+        </Card>
+       )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         {/* Recent Activity */}
