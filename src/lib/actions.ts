@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { db, auth as clientAuth, storage } from './firebase'; // Import client-side auth
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId, setDoc } from 'firebase/firestore';
-import type { EquipmentItem, EquipmentSet, User } from './types';
+import type { EquipmentItem, EquipmentSet, User, EquipmentStatus } from './types';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 
@@ -52,13 +52,6 @@ const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
     } as EquipmentItem;
 };
 
-// NOTE: All get... functions are being removed as they will be executed on the client.
-// export async function getEquipmentItems(): Promise<EquipmentItem[]> { ... }
-// export async function getEquipmentItemById(id: string): Promise<EquipmentItem | null> { ... }
-// export async function getDashboardStats() { ... }
-// export async function getRecentActivity(): Promise<EquipmentItem[]> { ... }
-// export async function getEquipmentSets(): Promise<EquipmentSet[]> { ... }
-// export async function getSetOptions(): Promise<{ id: string, name: string }[]> { ... }
 
 export async function saveEquipment(formData: FormData) {
     const rawData = {
@@ -166,30 +159,17 @@ export async function saveEquipmentSet(formData: FormData) {
     revalidatePath('/dashboard/sets');
 }
 
-// REMOVED getUser, getUsers, updateUserRole as they require Admin SDK.
-// User state will be managed on the client.
-
-
 export async function signOut() {
-    // This server action is now primarily for redirecting.
-    // The actual sign out happens on the client.
-    cookies().delete('session'); // Keep for good measure, though not used for auth state
+    cookies().delete('session'); 
     revalidatePath('/', 'layout');
     redirect('/login');
 }
 
 
 export async function signUp(values: z.infer<typeof signUpSchema>) {
-    // This function can no longer be a server action as it uses the client SDK.
-    // It is kept here for reference but the implementation will be in the component.
-    // The actual implementation is moved to the register-form.tsx component.
-    // We're returning a success to avoid breaking the form, but the real logic is on the client.
      return { success: true };
 }
 
-
-// This function must be called from a Client Component or a Server Action
-// but it uses the client SDK. We can't use the Admin SDK to sign in a user.
 export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
     try {
         const validatedFields = signInSchema.safeParse(values);
@@ -198,8 +178,6 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
         }
         
         const { email, password } = validatedFields.data;
-        // This part is problematic in a server action. The actual sign-in will be client-side.
-        // We leave this function here but the client will handle sign-in directly.
         const userCredential = await signInWithEmailAndPassword(clientAuth, email, password);
         const idToken = await userCredential.user.getIdToken();
 
@@ -227,8 +205,6 @@ export async function signInWithEmail(values: z.infer<typeof signInSchema>) {
 }
 
 export async function updateUserAvatar(formData: FormData) {
- // This function cannot work without the Admin SDK to get a stable download URL
- // and update the user's auth profile. It's left here but will not function correctly.
   const file = formData.get('avatar') as File | null;
   if (!file) {
     throw new Error('No file uploaded');
@@ -239,7 +215,6 @@ export async function updateUserAvatar(formData: FormData) {
   return { success: false, error: "Avatar update is disabled." };
 }
 
-// NEW FUNCTION: To create a user document in Firestore after client-side registration
 export async function createUserDocument(userId: string, name: string, email: string) {
     try {
         const userDocRef = doc(db, "users", userId);
@@ -255,16 +230,25 @@ export async function createUserDocument(userId: string, name: string, email: st
         return { success: false, error: "Failed to create user profile." };
     }
 }
-// Client-side data fetching functions that were previously in actions.ts
-// These will be used in client components with hooks.
-// It is better to co-locate these with the components, so we will not keep them here.
-// But for reference, this is how you would fetch data on the client:
 
-/*
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
-import { db } from './firebase'; // Make sure this points to your client-side firebase config
+export async function updateEquipmentStatus(id: string, status: EquipmentStatus) {
+    const statusSchema = z.enum(['usable', 'broken', 'lost']);
+    const validatedStatus = statusSchema.safeParse(status);
 
-export async function getDashboardStatsClient() {
-    // Implementation here
+    if (!validatedStatus.success) {
+        console.error('Validation errors:', validatedStatus.error.flatten().fieldErrors);
+        return { success: false, error: 'Invalid status provided.' };
+    }
+
+    try {
+        const docRef = doc(db, "equipment", id);
+        await updateDoc(docRef, { status: validatedStatus.data });
+        revalidatePath(`/dashboard/equipment/${id}`);
+        revalidatePath(`/dashboard`);
+        revalidatePath(`/dashboard/equipment`);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Firestore Error updating status:', error.message);
+        return { success: false, error: 'Failed to update status.' };
+    }
 }
-*/

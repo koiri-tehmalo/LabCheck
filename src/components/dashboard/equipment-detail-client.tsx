@@ -11,6 +11,8 @@ import Image from 'next/image';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 import type { EquipmentItem } from '@/lib/types';
+import { ReportStatusClient } from './report-status-client';
+import { useAuth } from '@/hooks/use-auth';
 
 async function generateQRCode(text: string) {
     try {
@@ -56,8 +58,14 @@ function PrintAndDownloadButtons({ qrCodeDataUrl, itemId }: { qrCodeDataUrl: str
 }
 
 
-export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
+export function EquipmentDetailClient({ item: initialItem }: { item: EquipmentItem }) {
+  const [item, setItem] = useState(initialItem);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    setItem(initialItem);
+  }, [initialItem]);
 
   useEffect(() => {
     // We can't know the full URL on the server, so we generate a relative one
@@ -118,6 +126,7 @@ export function EquipmentDetailClient({ item }: { item: EquipmentItem }) {
                     )}
                 </CardContent>
             </Card>
+            {user && <ReportStatusClient item={item} setItem={setItem} />}
         </div>
         <div className="space-y-4 print:col-span-1 print:flex print:flex-col print:items-center">
              <Card className="print:shadow-none print:border-none">
