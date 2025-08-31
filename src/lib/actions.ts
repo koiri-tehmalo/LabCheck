@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -6,7 +7,7 @@ import { z } from 'zod';
 import { db, auth as clientAuth, storage } from './firebase'; // Import client-side auth
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, documentId, setDoc } from 'firebase/firestore';
-import type { EquipmentItem, EquipmentSet, User, UserRole } from './types';
+import type { EquipmentItem, EquipmentSet, User } from './types';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 
@@ -245,7 +246,6 @@ export async function createUserDocument(userId: string, name: string, email: st
         await setDoc(userDocRef, {
             name: name,
             email: email,
-            role: 'guest', // Default role for new users
             avatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
             createdAt: new Date().toISOString(),
         });

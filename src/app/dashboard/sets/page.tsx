@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/dashboard/status-badge";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState, useMemo } from "react";
-import type { EquipmentSet, EquipmentItem, User } from "@/lib/types";
+import type { EquipmentSet, EquipmentItem } from "@/lib/types";
 import {
   Dialog,
   DialogContent,

@@ -5,7 +5,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import type { User, UserRole } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface AuthContextType {
@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             name: userData.name || firebaseUser.displayName || 'User',
             email: userData.email || firebaseUser.email || '',
             avatar: userData.avatar || firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-            role: (userData.role as UserRole) || 'guest',
           });
         } else {
             // This case can happen if the user exists in Auth but not in Firestore
@@ -46,7 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: firebaseUser.displayName || 'User',
                 email: firebaseUser.email || '',
                 avatar: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-                role: 'guest',
             });
         }
       } else {

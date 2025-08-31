@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
-import type { EquipmentItem, User } from "@/lib/types";
+import type { EquipmentItem } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";

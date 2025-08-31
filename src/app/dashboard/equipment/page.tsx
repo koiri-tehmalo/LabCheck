@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
 import { EquipmentTable } from "@/components/dashboard/equipment-table";
 import { useState, useEffect, useMemo } from "react";
-import type { EquipmentItem, User } from "@/lib/types";
+import type { EquipmentItem } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
