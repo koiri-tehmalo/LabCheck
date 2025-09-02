@@ -13,6 +13,9 @@ import { useEffect, useState } from 'react';
 import type { EquipmentItem } from '@/lib/types';
 import { ReportStatusClient } from './report-status-client';
 import { useAuth } from '@/hooks/use-auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 async function generateQRCode(text: string) {
     try {
@@ -61,6 +64,8 @@ function PrintAndDownloadButtons({ qrCodeDataUrl, itemId }: { qrCodeDataUrl: str
 export function EquipmentDetailClient({ item: initialItem }: { item: EquipmentItem }) {
   const [item, setItem] = useState(initialItem);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [setName, setSetName] = useState<string | null>(null);
+  const [loadingSet, setLoadingSet] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -72,7 +77,30 @@ export function EquipmentDetailClient({ item: initialItem }: { item: EquipmentIt
     // and the QR code will point to that.
     const assetUrl = `${window.location.origin}/dashboard/equipment/${item.id}`;
     generateQRCode(assetUrl).then(setQrCodeDataUrl);
-  }, [item.id]);
+
+    async function fetchSetName() {
+      if (!item.setId) {
+        setLoadingSet(false);
+        return;
+      }
+      try {
+        const setDocRef = doc(db, 'equipment_sets', item.setId);
+        const setDocSnap = await getDoc(setDocRef);
+        if (setDocSnap.exists()) {
+          setSetName(setDocSnap.data().name);
+        } else {
+          setSetName('Unknown Set');
+        }
+      } catch (error) {
+        console.error("Error fetching set name: ", error);
+        setSetName('Error');
+      } finally {
+        setLoadingSet(false);
+      }
+    }
+
+    fetchSetName();
+  }, [item.id, item.setId]);
   
   return (
     <div className="flex flex-col gap-4 md:gap-8 print:gap-4 printable-area">
@@ -114,7 +142,11 @@ export function EquipmentDetailClient({ item: initialItem }: { item: EquipmentIt
                         {item.setId && (
                             <div>
                                 <p className="font-medium text-muted-foreground">Equipment Set</p>
-                                <p>{item.setId}</p>
+                                {loadingSet ? (
+                                  <Skeleton className="h-5 w-24 mt-1" />
+                                ) : (
+                                  <p>{setName}</p>
+                                )}
                             </div>
                         )}
                     </div>
