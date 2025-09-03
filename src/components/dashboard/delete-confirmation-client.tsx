@@ -14,26 +14,35 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { deleteEquipment } from '@/lib/actions';
 import { AlertTriangle } from 'lucide-react';
 import type { EquipmentItem } from '@/lib/types';
+import { useRouter } from 'next/navigation';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function DeleteConfirmationClient({ item }: { item: EquipmentItem }) {
     const { toast } = useToast();
+    const router = useRouter();
 
     const handleDelete = async () => {
         try {
-            await deleteEquipment(item.id);
+            const docRef = doc(db, "equipment", item.id);
+            await deleteDoc(docRef);
+            
             toast({
                 title: 'Equipment Deleted',
                 description: `The asset "${item.name}" has been deleted.`,
                 variant: 'destructive',
             });
-            // The redirect is handled by the server action
+            
+            router.push('/dashboard/equipment');
+            router.refresh();
+
         } catch (error) {
+            console.error("Error deleting equipment: ", error);
             toast({
                 title: 'Error',
-                description: 'Failed to delete equipment.',
+                description: 'Failed to delete equipment. Please check your connection or permissions.',
                 variant: 'destructive',
             });
         }

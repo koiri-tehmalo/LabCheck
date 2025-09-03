@@ -53,17 +53,6 @@ const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
 };
 
 
-export async function deleteEquipment(id: string) {
-    try {
-        await deleteDoc(doc(db, "equipment", id));
-    } catch (error: any) {
-        console.error('Firestore Error deleting equipment:', error.message);
-        throw new Error('Failed to delete equipment item.');
-    }
-    revalidatePath('/dashboard/equipment');
-    redirect('/dashboard/equipment');
-}
-
 
 export async function signOut() {
     cookies().delete('session'); 
