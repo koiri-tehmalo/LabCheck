@@ -138,27 +138,6 @@ export async function deleteEquipment(id: string) {
 }
 
 
-export async function saveEquipmentSet(formData: FormData) {
-    const validatedFields = setFormSchema.safeParse({
-        name: formData.get('name'),
-        location: formData.get('location'),
-    });
-
-    if (!validatedFields.success) {
-        console.error('Validation errors:', validatedFields.error.flatten().fieldErrors);
-        throw new Error("Validation failed");
-    }
-
-    try {
-        await addDoc(collection(db, "equipment_sets"), validatedFields.data);
-    } catch (error: any) {
-        console.error('Firestore Error saving equipment set:', error.message);
-        throw new Error('Failed to create equipment set.');
-    }
-
-    revalidatePath('/dashboard/sets');
-}
-
 export async function signOut() {
     cookies().delete('session'); 
     revalidatePath('/', 'layout');

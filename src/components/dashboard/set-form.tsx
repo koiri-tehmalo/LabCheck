@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { saveEquipmentSet } from "@/lib/actions"
 import type { EquipmentSet } from "@/lib/types";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -44,13 +45,6 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
   })
 
   async function onSubmit(values: SetFormValues) {
-    const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (value) {
-          formData.append(key, value);
-      }
-    });
-
     try {
       if (isEditing && defaultValues?.id) {
         // TODO: Implement update functionality
@@ -59,7 +53,7 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
           description: `The set "${values.name}" has been successfully updated.`,
         });
       } else {
-        await saveEquipmentSet(formData);
+        await addDoc(collection(db, "equipment_sets"), values);
         toast({
           title: "Set Created",
           description: `The set "${values.name}" has been successfully created.`,
@@ -69,6 +63,7 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
         onSuccess();
       }
     } catch (error) {
+      console.error("Error saving set:", error);
       toast({
         title: "Error",
         description: `There was an error saving the set. Please try again.`,
@@ -112,7 +107,9 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
             <Button type="button" variant="outline" onClick={onSuccess}>
                 Cancel
             </Button>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Set'}</Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Creating...' : (isEditing ? 'Save Changes' : 'Create Set')}
+            </Button>
         </div>
       </form>
     </Form>
