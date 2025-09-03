@@ -46,16 +46,16 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
   async function onSubmit(values: SetFormValues) {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-          formData.append(key, value as string);
+      if (value) {
+          formData.append(key, value);
       }
     });
 
     try {
       if (isEditing && defaultValues?.id) {
-        // await updateEquipmentSet(defaultValues.id, formData); // To be implemented
+        // TODO: Implement update functionality
         toast({
-          title: "Set Updated",
+          title: "Set Updated (Not Implemented)",
           description: `The set "${values.name}" has been successfully updated.`,
         });
       } else {
