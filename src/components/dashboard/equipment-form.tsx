@@ -34,9 +34,8 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentItem } from "@/lib/types"
-import { saveEquipment, updateEquipment } from "@/lib/actions"
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const formSchema = z.object({
@@ -92,33 +91,22 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
   })
 
   async function onSubmit(values: EquipmentFormValues) {
-    const formData = new FormData();
     const dataToSubmit = {
       ...values,
+      notes: values.notes || '',
       setId: values.setId === 'none' ? '' : values.setId,
     };
 
-
-    Object.entries(dataToSubmit).forEach(([key, value]) => {
-        // Append all values, but exclude null/undefined
-        if (value !== null && value !== undefined) {
-             if (value instanceof Date) {
-                formData.append(key, value.toISOString());
-            } else {
-                formData.append(key, value as string);
-            }
-        }
-    });
-
     try {
       if (isEditing && defaultValues?.id) {
-        await updateEquipment(defaultValues.id, formData);
+        const docRef = doc(db, "equipment", defaultValues.id);
+        await updateDoc(docRef, dataToSubmit);
         toast({
           title: "Equipment Updated",
           description: `The equipment "${values.name}" has been successfully updated.`,
         });
       } else {
-        await saveEquipment(formData);
+        await addDoc(collection(db, "equipment"), dataToSubmit);
         toast({
           title: "Equipment Added",
           description: `The equipment "${values.name}" has been successfully saved.`,
@@ -128,6 +116,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
         onSuccess();
       }
     } catch (error) {
+      console.error("Error saving equipment:", error);
       toast({
         title: "Error",
         description: `There was an error saving the equipment. Please try again.`,
@@ -271,7 +260,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
                         <SelectItem value="none">-- No Set --</SelectItem>
                         {setOptions.map(option => (
                             <SelectItem key={option.id} value={option.id}>
-                                {option.name} ({option.id})
+                                {option.name}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -305,7 +294,9 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             <Button type="button" variant="outline" onClick={onSuccess}>
                 Cancel
             </Button>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Add Equipment'}</Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Equipment')}
+            </Button>
         </div>
       </form>
     </Form>
