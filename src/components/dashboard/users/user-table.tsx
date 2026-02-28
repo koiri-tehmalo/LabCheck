@@ -81,8 +81,6 @@ export function UserTable({ data, onDataChange, currentUser }: UserTableProps) {
         return <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/20">ผู้ดูแลระบบ (Admin)</Badge>;
       case 'STAFF':
         return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20">เจ้าหน้าที่ (Staff)</Badge>;
-      case 'VIEWER':
-        return <Badge className="bg-zinc-500/10 text-zinc-400 border-zinc-500/20 hover:bg-zinc-500/20">ผู้เยี่ยมชม (Viewer)</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
@@ -141,9 +139,8 @@ export function UserTable({ data, onDataChange, currentUser }: UserTableProps) {
                           <DropdownMenuItem onClick={() => handleRoleChange(item.id, 'STAFF')} disabled={isSelf || item.role === 'STAFF'} className="cursor-pointer">
                             <UserCog className="mr-2 h-4 w-4 text-blue-400" /> ตั้งเป็น Staff
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleRoleChange(item.id, 'VIEWER')} disabled={isSelf || item.role === 'VIEWER'} className="cursor-pointer">
-                            <UserCog className="mr-2 h-4 w-4 text-zinc-400" /> ตั้งเป็น Viewer
-                          </DropdownMenuItem>
+                          
+                          
                           
                           {!isSelf && (
                             <>
