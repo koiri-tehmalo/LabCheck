@@ -17,70 +17,64 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle } from 'lucide-react';
 import type { EquipmentItem } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { deleteEquipment } from '@/actions/equipment';
 
 export function DeleteConfirmationClient({ item }: { item: EquipmentItem }) {
     const { toast } = useToast();
     const router = useRouter();
 
     const handleDelete = async () => {
-        try {
-            const docRef = doc(db, "equipment", item.id);
-            await deleteDoc(docRef);
-            
+        const result = await deleteEquipment(item.id);
+
+        if (result.success) {
             toast({
-                title: 'Equipment Deleted',
-                description: `The asset "${item.name}" has been deleted.`,
+                title: 'ลบครุภัณฑ์สำเร็จ',
+                description: `ครุภัณฑ์ "${item.name}" ถูกลบแล้ว`,
                 variant: 'destructive',
             });
-            
             router.push('/dashboard/equipment');
             router.refresh();
-
-        } catch (error) {
-            console.error("Error deleting equipment: ", error);
+        } else {
             toast({
-                title: 'Error',
-                description: 'Failed to delete equipment. Please check your connection or permissions.',
+                title: 'เกิดข้อผิดพลาด',
+                description: result.error,
                 variant: 'destructive',
             });
         }
     };
 
     return (
-        <Card className="border-destructive">
+        <Card className="glass-card border-rose-500/30">
             <CardHeader className="text-center">
-                <div className="mx-auto bg-destructive/10 p-3 rounded-full w-fit">
-                    <AlertTriangle className="h-8 w-8 text-destructive" />
+                <div className="mx-auto bg-rose-500/15 p-3 rounded-full w-fit">
+                    <AlertTriangle className="h-8 w-8 text-rose-400" />
                 </div>
-                <CardTitle className="text-2xl text-destructive">Confirm Deletion</CardTitle>
+                <CardTitle className="text-2xl text-rose-400">ยืนยันการลบ</CardTitle>
                 <CardDescription>
-                    Are you sure you want to permanently delete this asset? This action cannot be undone.
+                    คุณแน่ใจหรือไม่ว่าต้องการลบครุภัณฑ์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="rounded-md border bg-muted/50 p-4 text-sm">
-                    <p><strong>Asset Name:</strong> {item.name}</p>
+                <div className="rounded-lg border border-border/30 bg-[hsl(220,15%,10%)] p-4 text-sm">
+                    <p><strong>ชื่อครุภัณฑ์:</strong> {item.name}</p>
                     <p><strong>หมายเลขครุภัณฑ์:</strong> {item.assetId}</p>
-                    <p><strong>Model:</strong> {item.model}</p>
+                    <p><strong>รุ่น:</strong> {item.model}</p>
                 </div>
                 
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button variant="destructive" className="w-full">Delete Asset</Button>
+                         <Button variant="destructive" className="w-full">ลบครุภัณฑ์</Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="glass-elevated border-border/40">
                         <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>คุณแน่ใจหรือไม่?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the
-                            equipment item from the database.
+                            การดำเนินการนี้จะลบครุภัณฑ์ออกจากฐานข้อมูลอย่างถาวร
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">ลบ</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>

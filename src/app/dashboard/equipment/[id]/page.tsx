@@ -1,46 +1,32 @@
-
 'use client';
 
 import { notFound } from 'next/navigation';
 import { EquipmentDetailClient } from '@/components/dashboard/equipment-detail-client';
-import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useEffect, useState, use } from 'react';
+import { getEquipmentById } from '@/actions/equipment';
 import type { EquipmentItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
+export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = use(params);
   const [item, setItem] = useState<EquipmentItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const { id } = params;
+  const { id } = unwrappedParams;
 
   useEffect(() => {
-    async function getEquipmentItemById(itemId: string) {
-      try {
-        const docRef = doc(db, "equipment", itemId);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setItem({
-            id: docSnap.id,
-            ...data,
-            purchaseDate: data.purchaseDate.toDate().toISOString(),
-          } as EquipmentItem);
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error(err);
+    async function fetchItem() {
+      const result = await getEquipmentById(id);
+      if (!result) {
         setError(true);
-      } finally {
-        setLoading(false);
+      } else {
+        setItem(result);
       }
+      setLoading(false);
     }
 
     if (id) {
-      getEquipmentItemById(id);
+      fetchItem();
     }
   }, [id]);
 

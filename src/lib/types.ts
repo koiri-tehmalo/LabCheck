@@ -1,28 +1,39 @@
+export type EquipmentStatus = 'USABLE' | 'BROKEN' | 'LOST';
+
+export type Role = 'ADMIN' | 'STAFF';
 
 export type User = {
   id: string;
   name: string;
   email: string;
-  avatar: string;
+  avatar: string | null;
+  role: Role;
 };
 
-export type EquipmentStatus = 'usable' | 'broken' | 'lost';
-
 export type EquipmentItem = {
-  id: string; // Firestore document ID
-  assetId: string; // User-defined asset ID
+  id: string;
+  assetId: string;
   name: string;
   model: string;
-  purchaseDate: string; // Stored as ISO string
+  purchaseDate: string;
   status: EquipmentStatus;
   location: string;
-  notes?: string;
-  setId?: string;
+  notes: string | null;
+  setId: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type EquipmentSet = {
   id: string;
   name: string;
-  items?: EquipmentItem[];
   location: string;
+  items?: EquipmentItem[];
+};
+
+export type DashboardStats = {
+  total: number;
+  usable: number;
+  broken: number;
+  lost: number;
 };

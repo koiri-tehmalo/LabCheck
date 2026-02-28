@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -7,8 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CircleCheckBig, TriangleAlert, CircleHelp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { updateEquipmentStatus } from '@/actions/equipment';
 
 interface ReportStatusClientProps {
     item: EquipmentItem;
@@ -24,25 +22,23 @@ export function ReportStatusClient({ item, setItem }: ReportStatusClientProps) {
 
         setLoadingStatus(newStatus);
         
-        try {
-            const docRef = doc(db, "equipment", item.id);
-            await updateDoc(docRef, { status: newStatus });
+        const result = await updateEquipmentStatus(item.id, newStatus);
 
+        if (result.success) {
             setItem({ ...item, status: newStatus });
             toast({
-                title: 'Status Updated',
-                description: `Successfully marked "${item.name}" as ${newStatus}.`,
+                title: 'อัปเดตสถานะสำเร็จ',
+                description: `"${item.name}" ถูกเปลี่ยนเป็น ${newStatus === 'USABLE' ? 'ใช้งานได้' : newStatus === 'BROKEN' ? 'ชำรุด' : 'สูญหาย'}`,
             });
-        } catch (error: any) {
-            console.error("Firestore Error updating status:", error);
+        } else {
             toast({
-                title: 'Error',
-                description: 'Failed to update status. Please check your connection or permissions.',
+                title: 'เกิดข้อผิดพลาด',
+                description: result.error,
                 variant: 'destructive',
             });
-        } finally {
-            setLoadingStatus(null);
         }
+
+        setLoadingStatus(null);
     };
     
     const isButtonLoading = (status: EquipmentStatus) => loadingStatus === status;
@@ -50,38 +46,38 @@ export function ReportStatusClient({ item, setItem }: ReportStatusClientProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Report Issue / Update Status</CardTitle>
+                <CardTitle>แจ้งปัญหา / อัปเดตสถานะ</CardTitle>
                 <CardDescription>
-                    If the status of this asset has changed, you can update it here.
+                    หากสถานะครุภัณฑ์เปลี่ยนแปลง สามารถอัปเดตได้ที่นี่
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button 
-                    variant={item.status === 'usable' ? 'default' : 'outline'}
-                    disabled={item.status === 'usable' || !!loadingStatus}
-                    onClick={() => handleStatusUpdate('usable')}
+                    variant={item.status === 'USABLE' ? 'default' : 'outline'}
+                    disabled={item.status === 'USABLE' || !!loadingStatus}
+                    onClick={() => handleStatusUpdate('USABLE')}
                     className="bg-green-500/10 border-green-500 text-green-700 hover:bg-green-500/20 data-[variant=default]:bg-green-600 data-[variant=default]:text-white"
                 >
-                    {isButtonLoading('usable') ? <Loader2 className="animate-spin" /> : <CircleCheckBig />}
-                    Mark as Usable
+                    {isButtonLoading('USABLE') ? <Loader2 className="animate-spin" /> : <CircleCheckBig />}
+                    ใช้งานได้
                 </Button>
                  <Button 
-                    variant={item.status === 'broken' ? 'default' : 'outline'}
-                    disabled={item.status === 'broken' || !!loadingStatus}
-                    onClick={() => handleStatusUpdate('broken')}
+                    variant={item.status === 'BROKEN' ? 'default' : 'outline'}
+                    disabled={item.status === 'BROKEN' || !!loadingStatus}
+                    onClick={() => handleStatusUpdate('BROKEN')}
                     className="bg-orange-500/10 border-orange-500 text-orange-700 hover:bg-orange-500/20 data-[variant=default]:bg-orange-500 data-[variant=default]:text-white"
                 >
-                    {isButtonLoading('broken') ? <Loader2 className="animate-spin" /> : <TriangleAlert />}
-                    Mark as Broken
+                    {isButtonLoading('BROKEN') ? <Loader2 className="animate-spin" /> : <TriangleAlert />}
+                    ชำรุด
                 </Button>
                  <Button 
-                    variant={item.status === 'lost' ? 'destructive' : 'outline'}
-                    disabled={item.status === 'lost' || !!loadingStatus}
-                    onClick={() => handleStatusUpdate('lost')}
+                    variant={item.status === 'LOST' ? 'destructive' : 'outline'}
+                    disabled={item.status === 'LOST' || !!loadingStatus}
+                    onClick={() => handleStatusUpdate('LOST')}
                     className="bg-red-500/10 border-red-500 text-red-700 hover:bg-red-500/20 data-[variant=destructive]:bg-red-600 data-[variant=destructive]:text-white"
                 >
-                    {isButtonLoading('lost') ? <Loader2 className="animate-spin" /> : <CircleHelp />}
-                    Mark as Lost
+                    {isButtonLoading('LOST') ? <Loader2 className="animate-spin" /> : <CircleHelp />}
+                    สูญหาย
                 </Button>
             </CardContent>
         </Card>

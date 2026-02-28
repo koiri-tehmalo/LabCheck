@@ -1,4 +1,3 @@
-
 'use client';
 
 import { notFound } from 'next/navigation';
@@ -6,36 +5,27 @@ import { DeleteConfirmationClient } from '@/components/dashboard/delete-confirma
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useEffect, useState, use } from 'react';
+import { getEquipmentById } from '@/actions/equipment';
 import type { EquipmentItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function DeleteEquipmentPage({ params }: { params: { id: string } }) {
+export default function DeleteEquipmentPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = use(params);
   const [item, setItem] = useState<EquipmentItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const { id } = params;
+  const { id } = unwrappedParams;
 
   useEffect(() => {
-    async function getEquipmentItemById(itemId: string) {
-      const docRef = doc(db, "equipment", itemId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-         const data = docSnap.data();
-          setItem({
-            id: docSnap.id,
-            ...data,
-            purchaseDate: data.purchaseDate.toDate().toISOString(),
-          } as EquipmentItem);
-      }
+    async function fetchItem() {
+      const result = await getEquipmentById(id);
+      setItem(result);
       setLoading(false);
     }
     if (id) {
-      getEquipmentItemById(id);
+      fetchItem();
     }
   }, [id]);
-
 
   if (loading) {
     return (
@@ -54,10 +44,10 @@ export default function DeleteEquipmentPage({ params }: { params: { id: string }
     <>
       <div className="max-w-2xl mx-auto">
         <div className="mb-4">
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="btn-glass border-border/40">
             <Link href="/dashboard/equipment">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Equipment List
+              กลับไปรายการครุภัณฑ์
             </Link>
           </Button>
         </div>

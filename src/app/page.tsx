@@ -1,292 +1,203 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardDrive, TriangleAlert, CircleCheckBig, CircleHelp, Plus, Camera, FileText, Component, ServerCrash } from "lucide-react";
+import { HardDrive, TriangleAlert, CircleCheckBig, CircleHelp, Plus, Camera, FileText, Component } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
-import type { EquipmentItem } from "@/lib/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { EquipmentItem, DashboardStats } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-
-
-type DashboardStats = {
-  total: number;
-  usable: number;
-  broken: number;
-  lost: number;
-  error?: string | null;
-}
-
-// Helper to convert Firestore snapshot to EquipmentItem
-const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
-    const data = snapshot.data();
-    return {
-        id: snapshot.id,
-        ...data,
-        purchaseDate: data.purchaseDate.toDate().toISOString(),
-    } as EquipmentItem;
-};
-
+import { getDashboardStats, getRecentActivity } from '@/actions/dashboard';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0, error: null });
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, usable: 0, broken: 0, lost: 0 });
   const [recentActivity, setRecentActivity] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function getDashboardStats() {
-        try {
-            const equipmentCollection = collection(db, "equipment");
-            
-            const totalPromise = getDocs(equipmentCollection).then(snap => snap.size);
-            const usablePromise = getDocs(query(equipmentCollection, where("status", "==", "usable"))).then(snap => snap.size);
-            const brokenPromise = getDocs(query(equipmentCollection, where("status", "==", "broken"))).then(snap => snap.size);
-            const lostPromise = getDocs(query(equipmentCollection, where("status", "==", "lost"))).then(snap => snap.size);
-
-            const [total, usable, broken, lost] = await Promise.all([totalPromise, usablePromise, brokenPromise, lostPromise]);
-
-            setStats({ total, usable, broken, lost, error: null });
-        } catch (error: any) {
-            console.error('Firestore Error getting dashboard stats:', error.message);
-            // Assuming this is a permissions error for guests, we can handle it gracefully.
-            // For logged-in users, it might be a real issue.
-            if (error.code === 'permission-denied') {
-                 setStats(prev => ({ ...prev, error: `Please update Firestore rules to allow public read access.`}))
-            } else {
-                 setStats(prev => ({ ...prev, error: `Failed to connect to the database. (${error.code})`}))
-            }
-        }
-    }
-
-    async function getRecentActivity() {
-      try {
-          const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"), limit(5));
-          const querySnapshot = await getDocs(q);
-          setRecentActivity(querySnapshot.docs.map(fromSnapshotToEquipmentItem));
-      } catch (error: any)
-      {
-          console.error('Firestore Error getting recent activity:', error.message);
-          // Don't set an error for this, the table will just be empty.
-      }
-    }
-
     async function fetchData() {
       setLoading(true);
-      await Promise.all([
+      const [statsData, activityData] = await Promise.all([
         getDashboardStats(),
-        getRecentActivity(),
+        getRecentActivity(5),
       ]);
+      setStats(statsData);
+      setRecentActivity(activityData);
       setLoading(false);
     }
-    
-    // Data is fetched regardless of user state now.
-    // Auth loading is checked to prevent fetching before auth state is known.
+
     if (!authLoading) {
       fetchData();
     }
   }, [authLoading]);
 
-  
   const { total, usable, broken, lost } = stats;
 
   const statsForChart = [
-    { label: 'Usable', count: usable, color: 'bg-green-500' },
-    { label: 'Broken', count: broken, color: 'bg-orange-500' },
-    { label: 'Lost', count: lost, color: 'bg-red-500' },
+    { label: 'ใช้งานได้', count: usable, color: 'from-emerald-500 to-emerald-400', glow: 'shadow-emerald-500/20' },
+    { label: 'ชำรุด', count: broken, color: 'from-amber-500 to-orange-400', glow: 'shadow-amber-500/20' },
+    { label: 'สูญหาย', count: lost, color: 'from-rose-500 to-red-400', glow: 'shadow-rose-500/20' },
   ];
 
-  const welcomeName = user ? user.name : 'Guest';
+  const welcomeName = user ? user.name : 'ผู้เยี่ยมชม';
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6">
-      {/* Welcome Section */}
-      <Card className="bg-primary text-primary-foreground">
-        <CardContent className="p-4 md:p-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold">Welcome, {welcomeName}!</h2>
-            <p className="opacity-80 text-sm md:text-base">
-              {new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-              })}
-            </p>
-          </div>
-          <div className="p-3 bg-primary-foreground/20 rounded-lg">
-            <HardDrive className="h-6 w-6 md:h-8 md:w-8 text-white" />
-          </div>
-        </CardContent>
-      </Card>
-      
-      {stats.error && (
-         <Alert variant="destructive">
-          <ServerCrash className="h-4 w-4" />
-          <AlertTitle>Database Error</AlertTitle>
-          <AlertDescription>
-            {stats.error} Stats and recent activity may not be accurate.
-          </AlertDescription>
-        </Alert>
-      )}
+    <div className="flex flex-col gap-5 md:gap-6">
+      {/* Welcome Section — Gradient Glass */}
+      <div className="glass-elevated p-5 md:p-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+            สวัสดี, {welcomeName}!
+          </h2>
+          <p className="text-muted-foreground text-sm md:text-base mt-1">
+            {new Date().toLocaleDateString('th-TH', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              weekday: 'long'
+            })}
+          </p>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-[hsl(230,80%,55%)] to-[hsl(260,70%,55%)] rounded-xl shadow-lg shadow-[hsl(230,80%,55%,0.3)]">
+          <HardDrive className="h-6 w-6 md:h-7 md:w-7 text-white" />
+        </div>
+      </div>
 
-      {/* Stats Cards in a Table */}
-      <Card>
-          <CardHeader>
-              <CardTitle className="text-xl">Asset Status Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-              <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                      <thead className="text-xs text-muted-foreground uppercase bg-secondary">
-                          <tr>
-                              <th scope="col" className="px-4 md:px-6 py-3">สถานะ</th>
-                              <th scope="col" className="px-4 md:px-6 py-3">จำนวน</th>
-                              <th scope="col" className="px-4 md:px-6 py-3 hidden sm:table-cell">คำอธิบาย</th>
-                              <th scope="col" className="px-4 md:px-6 py-3 text-center">สัญลักษณ์</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          <tr className="border-b">
-                              <td className="px-4 md:px-6 py-4 font-medium">Total Assets</td>
-                              <td className="px-4 md:px-6 py-4">{total}</td>
-                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">All items in inventory</td>
-                              <td className="px-4 md:px-6 py-4 flex justify-center"><HardDrive className="h-5 w-5"/></td>
-                          </tr>
-                          <tr className="border-b bg-green-500/10">
-                              <td className="px-4 md:px-6 py-4 font-medium">Usable Assets</td>
-                              <td className="px-4 md:px-6 py-4">{usable}</td>
-                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">Items ready for use</td>
-                              <td className="px-4 md:px-6 py-4 flex justify-center"><CircleCheckBig className="h-5 w-5 text-green-600"/></td>
-                          </tr>
-                          <tr className="border-b bg-orange-500/10">
-                              <td className="px-4 md:px-6 py-4 font-medium">Broken Assets</td>
-                              <td className="px-4 md:px-6 py-4">{broken}</td>
-                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">Items needing repair</td>
-                              <td className="px-4 md:px-6 py-4 flex justify-center"><TriangleAlert className="h-5 w-5 text-orange-600"/></td>
-                          </tr>
-                          <tr className="bg-red-500/10">
-                              <td className="px-4 md:px-6 py-4 font-medium">Lost Assets</td>
-                              <td className="px-4 md:px-6 py-4">{lost}</td>
-                              <td className="px-4 md:px-6 py-4 text-muted-foreground hidden sm:table-cell">Missing items</td>
-                              <td className="px-4 md:px-6 py-4 flex justify-center"><CircleHelp className="h-5 w-5 text-red-600"/></td>
-                          </tr>
-                      </tbody>
-                  </table>
-              </div>
-          </CardContent>
-      </Card>
+      {/* Stats Cards Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-card p-4 group hover:border-[hsl(230,80%,62%,0.3)] transition-glass">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-lg bg-[hsl(230,80%,62%,0.15)]">
+              <HardDrive className="h-4 w-4 text-[hsl(230,80%,70%)]" />
+            </div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">ทั้งหมด</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{total}</p>
+        </div>
+        <div className="glass-card p-4 group hover:border-emerald-500/30 transition-glass">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-lg bg-emerald-500/15">
+              <CircleCheckBig className="h-4 w-4 text-emerald-400" />
+            </div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">ใช้งานได้</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-400">{usable}</p>
+        </div>
+        <div className="glass-card p-4 group hover:border-amber-500/30 transition-glass">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-lg bg-amber-500/15">
+              <TriangleAlert className="h-4 w-4 text-amber-400" />
+            </div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">ชำรุด</span>
+          </div>
+          <p className="text-2xl font-bold text-amber-400">{broken}</p>
+        </div>
+        <div className="glass-card p-4 group hover:border-rose-500/30 transition-glass">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 rounded-lg bg-rose-500/15">
+              <CircleHelp className="h-4 w-4 text-rose-400" />
+            </div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">สูญหาย</span>
+          </div>
+          <p className="text-2xl font-bold text-rose-400">{lost}</p>
+        </div>
+      </div>
 
       {/* Quick Actions */}
        { user && (
-        <Card>
-            <CardHeader>
-            <CardTitle className="text-xl">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="flex-col h-24 text-center" asChild>
-                <Link href="/dashboard/equipment">
-                <Plus className="h-6 w-6 mb-1" />
-                <span>Add Asset</span>
-                </Link>
-            </Button>
-            <Button variant="outline" className="flex-col h-24 text-center" asChild>
-                <Link href="/dashboard/equipment">
-                <Camera className="h-6 w-6 mb-1" />
-                <span>Scan Equipment</span>
-                </Link>
-            </Button>
-            <Button variant="outline" className="flex-col h-24 text-center" asChild>
-                <Link href="/dashboard/reports">
-                <FileText className="h-6 w-6 mb-1" />
-                <span>Generate Report</span>
-                </Link>
-            </Button>
-            <Button variant="outline" className="flex-col h-24 text-center" asChild>
-                <Link href="/dashboard/sets">
-                <Component className="h-6 w-6 mb-1" />
-                <span>Equipment Sets</span>
-                </Link>
-            </Button>
-            </CardContent>
-        </Card>
+        <div className="glass-card p-5">
+            <h3 className="text-base font-semibold text-foreground mb-4">ทางลัด</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Link href="/dashboard/equipment" className="btn-glass flex flex-col items-center justify-center h-20 gap-2 text-center hover:border-[hsl(230,80%,62%,0.4)] hover:shadow-lg hover:shadow-[hsl(230,80%,62%,0.1)]">
+                <Plus className="h-5 w-5 text-[hsl(230,80%,70%)]" />
+                <span className="text-xs">เพิ่มครุภัณฑ์</span>
+              </Link>
+              <Link href="/dashboard/equipment" className="btn-glass flex flex-col items-center justify-center h-20 gap-2 text-center hover:border-[hsl(260,70%,60%,0.4)] hover:shadow-lg hover:shadow-[hsl(260,70%,55%,0.1)]">
+                <Camera className="h-5 w-5 text-[hsl(260,70%,70%)]" />
+                <span className="text-xs">สแกนครุภัณฑ์</span>
+              </Link>
+              <Link href="/dashboard/reports" className="btn-glass flex flex-col items-center justify-center h-20 gap-2 text-center hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10">
+                <FileText className="h-5 w-5 text-emerald-400" />
+                <span className="text-xs">สร้างรายงาน</span>
+              </Link>
+              <Link href="/dashboard/sets" className="btn-glass flex flex-col items-center justify-center h-20 gap-2 text-center hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10">
+                <Component className="h-5 w-5 text-amber-400" />
+                <span className="text-xs">ชุดครุภัณฑ์</span>
+              </Link>
+            </div>
+        </div>
        )}
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid gap-5 lg:grid-cols-5">
         {/* Recent Activity */}
-        <Card className="lg:col-span-3">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-xl">Recent Activity</CardTitle>
-                 <Button variant="link" asChild>
-                    <Link href="/dashboard/equipment">View all →</Link>
-                </Button>
-            </CardHeader>
-            <CardContent>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="text-xs text-muted-foreground uppercase">
-                           <tr>
-                               <th className="pb-2">Asset Name</th>
-                               <th className="pb-2 hidden sm:table-cell">Date Added</th>
-                               <th className="pb-2 text-right">Status</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                            {recentActivity.length > 0 ? (
-                                recentActivity.map(item => (
-                                    <tr key={item.id} className="border-t">
-                                        <td className="py-2">
-                                            <Link href={`/dashboard/equipment/${item.id}`} className="font-medium hover:underline">
-                                                {item.name}
-                                            </Link>
-                                            <div className="text-xs text-muted-foreground">{item.assetId}</div>
-                                        </td>
-                                        <td className="py-2 hidden sm:table-cell">{new Date(item.purchaseDate).toLocaleDateString()}</td>
-                                        <td className="py-2 text-right"><StatusBadge status={item.status} /></td>
-                                    </tr>
-                                ))
-                             ) : (
-                                <tr>
-                                    <td colSpan={3} className="py-4 text-center text-muted-foreground">
-                                        No recent activity or could not load data.
+        <div className="glass-card lg:col-span-3 overflow-hidden">
+            <div className="flex items-center justify-between p-5 pb-0">
+                <h3 className="text-base font-semibold text-foreground">กิจกรรมล่าสุด</h3>
+                <Link href="/dashboard/equipment" className="text-sm text-[hsl(230,80%,70%)] hover:text-[hsl(230,80%,80%)] transition-colors">
+                  ดูทั้งหมด →
+                </Link>
+            </div>
+            <div className="p-5 overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead className="text-xs text-muted-foreground uppercase tracking-wider">
+                       <tr>
+                           <th className="pb-3 text-left font-medium">ชื่อครุภัณฑ์</th>
+                           <th className="pb-3 text-left hidden sm:table-cell font-medium">วันที่เพิ่ม</th>
+                           <th className="pb-3 text-right font-medium">สถานะ</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                        {recentActivity.length > 0 ? (
+                            recentActivity.map(item => (
+                                <tr key={item.id} className="border-t border-border/30 glass-row">
+                                    <td className="py-3">
+                                        <Link href={`/dashboard/equipment/${item.id}`} className="font-medium text-foreground hover:text-[hsl(230,80%,70%)] transition-colors">
+                                            {item.name}
+                                        </Link>
+                                        <div className="text-xs text-muted-foreground mt-0.5">{item.assetId}</div>
                                     </td>
+                                    <td className="py-3 text-muted-foreground hidden sm:table-cell">{new Date(item.purchaseDate).toLocaleDateString('th-TH')}</td>
+                                    <td className="py-3 text-right"><StatusBadge status={item.status} /></td>
                                 </tr>
-                             )}
-                        </tbody>
-                    </table>
-                </div>
-            </CardContent>
-        </Card>
+                            ))
+                         ) : (
+                            <tr>
+                                <td colSpan={3} className="py-8 text-center text-muted-foreground">
+                                    ไม่มีกิจกรรมล่าสุด
+                                </td>
+                            </tr>
+                         )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         {/* Status Overview Chart */}
-        <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle className="text-xl">Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {statsForChart.map(({ label, count, color }) => {
+        <div className="glass-card lg:col-span-2 p-5">
+            <h3 className="text-base font-semibold text-foreground mb-5">ภาพรวม</h3>
+            <div className="space-y-5">
+              {statsForChart.map(({ label, count, color, glow }) => {
                 const percent = total > 0 ? (count / total) * 100 : 0;
                 return (
                   <div key={label}>
-                    <div className="flex justify-between items-center mb-1 text-sm">
-                      <div className="flex items-center gap-2">
-                         <span className={`h-2 w-2 rounded-full ${color}`} />
-                         <span className="font-medium">{label}</span>
-                      </div>
-                      <span className="text-muted-foreground">{count} ({percent.toFixed(1)}%)</span>
+                    <div className="flex justify-between items-center mb-2 text-sm">
+                      <span className="font-medium text-foreground/80">{label}</span>
+                      <span className="text-muted-foreground text-xs">{count} ({percent.toFixed(1)}%)</span>
                     </div>
-                    <Progress value={percent} className="h-2 [&>div]:bg-primary" />
+                    <div className="h-2 bg-[hsl(220,15%,12%)] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${color} shadow-lg ${glow} transition-all duration-700`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
       </div>
     </div>
   );

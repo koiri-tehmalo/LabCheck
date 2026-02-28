@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -15,17 +14,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentSet } from "@/lib/types";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  location: z.string().min(2, "Location is required."),
-})
-
-type SetFormValues = z.infer<typeof formSchema>
+import { createEquipmentSet } from '@/actions/set';
+import { setFormSchema, type SetFormValues } from '@/lib/schemas';
 
 interface SetFormProps {
   defaultValues?: Partial<EquipmentSet>;
@@ -37,7 +27,7 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
   const { toast } = useToast();
   
   const form = useForm<SetFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(setFormSchema),
     defaultValues: {
       name: defaultValues?.name || '',
       location: defaultValues?.location || '',
@@ -45,28 +35,18 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
   })
 
   async function onSubmit(values: SetFormValues) {
-    try {
-      if (isEditing && defaultValues?.id) {
-        // TODO: Implement update functionality
-        toast({
-          title: "Set Updated (Not Implemented)",
-          description: `The set "${values.name}" has been successfully updated.`,
-        });
-      } else {
-        await addDoc(collection(db, "equipment_sets"), values);
-        toast({
-          title: "Set Created",
-          description: `The set "${values.name}" has been successfully created.`,
-        });
-      }
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Error saving set:", error);
+    const result = await createEquipmentSet(values);
+
+    if (result.success) {
       toast({
-        title: "Error",
-        description: `There was an error saving the set. Please try again.`,
+        title: isEditing ? "แก้ไขชุดครุภัณฑ์สำเร็จ" : "สร้างชุดครุภัณฑ์สำเร็จ",
+        description: `ชุดครุภัณฑ์ "${values.name}" ได้รับการบันทึกแล้ว`,
+      });
+      if (onSuccess) onSuccess();
+    } else {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: result.error,
         variant: "destructive",
       });
     }
@@ -81,9 +61,9 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Set Name</FormLabel>
+                <FormLabel>ชื่อชุดครุภัณฑ์</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Conference Room A Kit" {...field} />
+                  <Input placeholder="เช่น ชุดห้องประชุม A" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -94,9 +74,9 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Location</FormLabel>
+                <FormLabel>สถานที่</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Building 1, Room 101" {...field} />
+                  <Input placeholder="เช่น อาคาร 1 ห้อง 101" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,10 +85,10 @@ export function SetForm({ defaultValues, isEditing = false, onSuccess }: SetForm
         </div>
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onSuccess}>
-                Cancel
+                ยกเลิก
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Creating...' : (isEditing ? 'Save Changes' : 'Create Set')}
+              {form.formState.isSubmitting ? 'กำลังบันทึก...' : (isEditing ? 'บันทึกการแก้ไข' : 'สร้างชุดครุภัณฑ์')}
             </Button>
         </div>
       </form>

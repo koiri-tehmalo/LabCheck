@@ -1,9 +1,7 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,24 +14,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-
-const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-});
-
-type RegisterFormValues = z.infer<typeof formSchema>;
+import { registerUser } from '@/actions/user';
+import { signUpSchema, type SignUpFormValues } from '@/lib/schemas';
 
 export function RegisterForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<SignUpFormValues>({
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -41,70 +30,36 @@ export function RegisterForm() {
     },
   });
 
-  async function onSubmit(values: RegisterFormValues) {
-    try {
-      // 1. Create user in Firebase Auth. This automatically signs the user in.
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
+  async function onSubmit(values: SignUpFormValues) {
+    const result = await registerUser(values);
 
-      // 2. Update Firebase Auth profile with the user's name.
-      await updateProfile(user, { displayName: values.name });
-
-      // 3. Create the user document in Firestore.
-      // This now runs on the client-side, authenticated as the new user,
-      // so it will pass the security rules.
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, {
-          name: values.name,
-          email: values.email,
-          avatar: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}`,
-          createdAt: new Date().toISOString(),
-      });
-
+    if (!result.success) {
       toast({
-        title: "Account Created!",
-        description: "You can now sign in with your credentials.",
-      });
-      router.push('/login');
-
-    } catch (error: any) {
-      let errorMessage = "An unknown error occurred.";
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/email-already-in-use':
-            errorMessage = "This email is already in use by another account.";
-            break;
-          case 'auth/invalid-email':
-            errorMessage = "Please enter a valid email address.";
-            break;
-          case 'auth/weak-password':
-            errorMessage = "The password is too weak. Please use at least 6 characters.";
-            break;
-          default:
-            errorMessage = `Registration failed: ${error.message}`;
-            break;
-        }
-      }
-      console.error("Registration Error: ", error);
-      toast({
-        title: "Registration Failed",
-        description: errorMessage,
+        title: "สมัครสมาชิกไม่สำเร็จ",
+        description: result.error,
         variant: "destructive",
       });
+      return;
     }
+
+    toast({
+      title: "สร้างบัญชีสำเร็จ!",
+      description: "คุณสามารถเข้าสู่ระบบได้แล้ว",
+    });
+    router.push('/login');
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel className="text-foreground/80 text-sm">ชื่อ-นามสกุล</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="สมชาย ใจดี" className="glass-input" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -115,9 +70,9 @@ export function RegisterForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-foreground/80 text-sm">อีเมล</FormLabel>
               <FormControl>
-                <Input placeholder="john.doe@example.com" {...field} />
+                <Input placeholder="somchai@example.com" className="glass-input" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -128,16 +83,16 @@ export function RegisterForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-foreground/80 text-sm">รหัสผ่าน</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input type="password" placeholder="••••••••" className="glass-input" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
+        <Button type="submit" className="w-full btn-gradient border-0 h-10 text-sm font-semibold" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? 'กำลังสร้างบัญชี...' : 'สมัครสมาชิก'}
         </Button>
       </form>
     </Form>

@@ -1,15 +1,22 @@
-
 import { type NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
-  // Since we moved to client-side auth, middleware can't reliably
-  // know the user's auth state from a cookie anymore.
-  // We will allow all requests to pass through and handle auth checks
-  // on the client-side within each page or component.
+  const token = await getToken({ req: request });
+  const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register';
+  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname === '/';
   
-  // This simplifies the middleware significantly.
-  // You might want to add back rules later if you have pages
-  // that are strictly server-gated and don't have a client-side component.
+  // Allow public access to equipment detail page (via QR code)
+  const isEquipmentDetail = /^\/dashboard\/equipment\/[^\/]+$/.test(request.nextUrl.pathname);
+
+  if (isDashboardPage && !token && !isEquipmentDetail) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   return NextResponse.next();
 }
 

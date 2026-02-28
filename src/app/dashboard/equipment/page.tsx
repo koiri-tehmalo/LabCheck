@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -17,19 +16,9 @@ import {
 } from "@/components/ui/dialog";
 import { EquipmentForm } from "@/components/dashboard/equipment-form";
 import { useAuth } from "@/hooks/use-auth";
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getEquipmentItems } from '@/actions/equipment';
 import { Skeleton } from "@/components/ui/skeleton";
-
-const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
-    const data = snapshot.data();
-    return {
-        id: snapshot.id,
-        ...data,
-        purchaseDate: data.purchaseDate.toDate().toISOString(),
-    } as EquipmentItem;
-};
-
+import { hasPermission } from "@/lib/permissions";
 
 export default function EquipmentPage() {
   const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
@@ -40,17 +29,9 @@ export default function EquipmentPage() {
 
   const fetchEquipment = async () => {
     setLoading(true);
-    try {
-      const q = query(collection(db, "equipment"), orderBy("purchaseDate", "desc"));
-      const querySnapshot = await getDocs(q);
-      const items = querySnapshot.docs.map(fromSnapshotToEquipmentItem);
-      setEquipment(items);
-    } catch (error) {
-      console.error("Failed to fetch equipment:", error);
-      // You might want to show a toast or an error message here
-    } finally {
-      setLoading(false);
-    }
+    const items = await getEquipmentItems();
+    setEquipment(items);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -61,10 +42,10 @@ export default function EquipmentPage() {
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
-    fetchEquipment(); // Refresh data
+    fetchEquipment();
   };
   
-  const canManage = !!user;
+  const canManage = hasPermission(user?.role, 'CREATE_EQUIPMENT');
 
   const filteredEquipment = useMemo(() => {
     if (!searchTerm) return equipment;
@@ -78,15 +59,15 @@ export default function EquipmentPage() {
     <div className="flex flex-col gap-4 md:gap-8">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">รายการครุภัณฑ์</h1>
-        <p className="text-muted-foreground">จัดการครุภัณฑ์ทั้งหมดของคุณ.</p>
+        <p className="text-muted-foreground">จัดการครุภัณฑ์ทั้งหมดของคุณ</p>
       </div>
 
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search by name or asset ID..." 
-            className="pl-10" 
+            placeholder="ค้นหาด้วยชื่อหรือหมายเลขครุภัณฑ์..." 
+            className="pl-10 glass-input" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -94,16 +75,16 @@ export default function EquipmentPage() {
         {canManage && (
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full md:w-auto">
+              <Button className="w-full md:w-auto btn-gradient border-0">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Equipment
+                เพิ่มครุภัณฑ์
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[625px]">
+            <DialogContent className="sm:max-w-[625px] glass-elevated border-border/40">
               <DialogHeader>
-                <DialogTitle>เพิ่มครุภัณฑ์ชิ่นใหม่</DialogTitle>
+                <DialogTitle>เพิ่มครุภัณฑ์ชิ้นใหม่</DialogTitle>
                 <DialogDescription>
-                  Fill out the form below to add a new asset to the inventory.
+                  กรอกข้อมูลด้านล่างเพื่อเพิ่มครุภัณฑ์ใหม่เข้าสู่ระบบ
                 </DialogDescription>
               </DialogHeader>
               <EquipmentForm onSuccess={handleSuccess} />
@@ -113,7 +94,7 @@ export default function EquipmentPage() {
       </div>
       
       {loading ? (
-        <div className="border rounded-lg p-4">
+        <div className="glass-card p-4">
           <div className="space-y-4">
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />

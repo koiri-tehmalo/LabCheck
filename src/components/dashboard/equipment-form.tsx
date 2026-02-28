@@ -1,14 +1,11 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,28 +29,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
+import { th } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import type { EquipmentItem } from "@/lib/types"
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-
-const formSchema = z.object({
-  assetId: z.string().min(1, { message: "Asset ID is required." }),
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  model: z.string().min(2, {
-    message: "Model must be at least 2 characters.",
-  }),
-  status: z.enum(["usable", "broken", "lost"]),
-  location: z.string().min(2, "Location is required."),
-  purchaseDate: z.date(),
-  notes: z.string().optional(),
-  setId: z.string().optional(),
-})
-
-type EquipmentFormValues = z.infer<typeof formSchema>
+import { createEquipment, updateEquipment } from '@/actions/equipment';
+import { getSetOptions } from '@/actions/set';
+import { equipmentFormSchema, type EquipmentFormValues } from '@/lib/schemas';
 
 interface EquipmentFormProps {
   defaultValues?: Partial<EquipmentItem>;
@@ -63,26 +45,23 @@ interface EquipmentFormProps {
 
 export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: EquipmentFormProps) {
   const { toast } = useToast();
-  const [setOptions, setSetOptions] = useState<{ id: string, name: string }[]>([]);
+  const [setOptionsList, setSetOptionsList] = useState<{ id: string, name: string }[]>([]);
 
   useEffect(() => {
     async function fetchSetOptions() {
-        const setsCollection = collection(db, "equipment_sets");
-        const q = query(setsCollection, orderBy("name"));
-        const querySnapshot = await getDocs(q);
-        const options = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
-        setSetOptions(options);
+      const options = await getSetOptions();
+      setSetOptionsList(options);
     }
     fetchSetOptions();
   }, []);
   
   const form = useForm<EquipmentFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(equipmentFormSchema),
     defaultValues: {
       assetId: defaultValues?.assetId || '',
       name: defaultValues?.name || '',
       model: defaultValues?.model || '',
-      status: defaultValues?.status || 'usable',
+      status: defaultValues?.status || 'USABLE',
       location: defaultValues?.location || '',
       notes: defaultValues?.notes || '',
       setId: defaultValues?.setId || '',
@@ -91,35 +70,20 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
   })
 
   async function onSubmit(values: EquipmentFormValues) {
-    const dataToSubmit = {
-      ...values,
-      notes: values.notes || '',
-      setId: values.setId === 'none' ? '' : values.setId,
-    };
+    const result = isEditing && defaultValues?.id
+      ? await updateEquipment(defaultValues.id, values)
+      : await createEquipment(values);
 
-    try {
-      if (isEditing && defaultValues?.id) {
-        const docRef = doc(db, "equipment", defaultValues.id);
-        await updateDoc(docRef, dataToSubmit);
-        toast({
-          title: "Equipment Updated",
-          description: `The equipment "${values.name}" has been successfully updated.`,
-        });
-      } else {
-        await addDoc(collection(db, "equipment"), dataToSubmit);
-        toast({
-          title: "Equipment Added",
-          description: `The equipment "${values.name}" has been successfully saved.`,
-        });
-      }
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Error saving equipment:", error);
+    if (result.success) {
       toast({
-        title: "Error",
-        description: `There was an error saving the equipment. Please try again.`,
+        title: isEditing ? "แก้ไขครุภัณฑ์สำเร็จ" : "เพิ่มครุภัณฑ์สำเร็จ",
+        description: `ครุภัณฑ์ "${values.name}" ได้รับการบันทึกแล้ว`,
+      });
+      if (onSuccess) onSuccess();
+    } else {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: result.error,
         variant: "destructive",
       });
     }
@@ -136,7 +100,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
               <FormItem>
                 <FormLabel>หมายเลขครุภัณฑ์</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., COM-00123" {...field} />
+                  <Input placeholder="เช่น COM-00123" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -147,9 +111,9 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asset Name</FormLabel>
+                <FormLabel>ชื่อครุภัณฑ์</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Dell Laptop" {...field} />
+                  <Input placeholder="เช่น คอมพิวเตอร์ Dell" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -160,9 +124,9 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             name="model"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Model</FormLabel>
+                <FormLabel>รุ่น</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Latitude 5420" {...field} />
+                  <Input placeholder="เช่น Latitude 5420" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -173,17 +137,17 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>สถานะ</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a status" />
+                      <SelectValue placeholder="เลือกสถานะ" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="usable">Usable</SelectItem>
-                    <SelectItem value="broken">Broken</SelectItem>
-                    <SelectItem value="lost">Lost</SelectItem>
+                    <SelectItem value="USABLE">ใช้งานได้</SelectItem>
+                    <SelectItem value="BROKEN">ชำรุด</SelectItem>
+                    <SelectItem value="LOST">สูญหาย</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -195,9 +159,9 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Location</FormLabel>
+                <FormLabel>สถานที่</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Lab A" {...field} />
+                  <Input placeholder="เช่น ห้องปฏิบัติการ A" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,7 +172,7 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             name="purchaseDate"
             render={({ field }) => (
               <FormItem className="flex flex-col pt-2">
-                <FormLabel>Purchase Date</FormLabel>
+                <FormLabel>วันที่จัดซื้อ</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -220,9 +184,9 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
                         )}
                       >
                         {field.value ? (
-                          format(field.value, "PPP")
+                          format(field.value, "PPP", { locale: th })
                         ) : (
-                          <span>Pick a date</span>
+                          <span>เลือกวันที่</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -249,16 +213,16 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
             name="setId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Equipment Set (Optional)</FormLabel>
+                <FormLabel>ชุดครุภัณฑ์ (ไม่บังคับ)</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a set" />
+                            <SelectValue placeholder="เลือกชุดครุภัณฑ์" />
                         </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        <SelectItem value="none">-- No Set --</SelectItem>
-                        {setOptions.map(option => (
+                        <SelectItem value="none">-- ไม่มี --</SelectItem>
+                        {setOptionsList.map(option => (
                             <SelectItem key={option.id} value={option.id}>
                                 {option.name}
                             </SelectItem>
@@ -275,10 +239,10 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormLabel>หมายเหตุ (ไม่บังคับ)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Any relevant notes about the asset..."
+                        placeholder="บันทึกข้อมูลเพิ่มเติมเกี่ยวกับครุภัณฑ์..."
                         className="resize-none"
                         {...field}
                          value={field.value || ''}
@@ -292,10 +256,10 @@ export function EquipmentForm({ defaultValues, isEditing = false, onSuccess }: E
         </div>
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onSuccess}>
-                Cancel
+                ยกเลิก
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Equipment')}
+              {form.formState.isSubmitting ? (isEditing ? 'กำลังบันทึก...' : 'กำลังเพิ่ม...') : (isEditing ? 'บันทึกการแก้ไข' : 'เพิ่มครุภัณฑ์')}
             </Button>
         </div>
       </form>

@@ -1,38 +1,40 @@
-import { Badge } from "@/components/ui/badge";
 import type { EquipmentStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { CircleCheckBig, TriangleAlert, CircleHelp } from "lucide-react";
 
-type StatusBadgeProps = {
-  status: EquipmentStatus;
+const STATUS_CONFIG: Record<EquipmentStatus, {
+  label: string;
+  bgClass: string;
+  textClass: string;
+  glowClass: string;
+}> = {
+  USABLE: {
+    label: 'ใช้งานได้',
+    bgClass: 'bg-emerald-500/15',
+    textClass: 'text-emerald-400',
+    glowClass: 'glow-green',
+  },
+  BROKEN: {
+    label: 'ชำรุด',
+    bgClass: 'bg-amber-500/15',
+    textClass: 'text-amber-400',
+    glowClass: 'glow-orange',
+  },
+  LOST: {
+    label: 'สูญหาย',
+    bgClass: 'bg-rose-500/15',
+    textClass: 'text-rose-400',
+    glowClass: 'glow-red',
+  },
 };
 
-const statusConfig = {
-  usable: {
-    label: "Usable",
-    icon: CircleCheckBig,
-    className: "bg-green-100 text-green-800 border-green-200 hover:bg-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
-  },
-  broken: {
-    label: "Broken",
-    icon: TriangleAlert,
-    className: "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800",
-  },
-  lost: {
-    label: "Lost",
-    icon: CircleHelp,
-    className: "bg-red-100 text-red-800 border-red-200 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800",
-  },
-};
-
-export function StatusBadge({ status }: StatusBadgeProps) {
-  const config = statusConfig[status];
-  const Icon = config.icon;
+export function StatusBadge({ status }: { status: EquipmentStatus | null }) {
+  if (!status) return null;
+  const config = STATUS_CONFIG[status];
+  if (!config) return null;
 
   return (
-    <Badge variant="outline" className={cn("capitalize gap-1.5", config.className)}>
-      <Icon className="h-3.5 w-3.5" />
-      <span>{config.label}</span>
-    </Badge>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgClass} ${config.textClass} ${config.glowClass}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.textClass.replace('text-', 'bg-')} mr-1.5 animate-glow-pulse`} />
+      {config.label}
+    </span>
   );
 }

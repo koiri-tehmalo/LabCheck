@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  avatar    String?
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model EquipmentSet {
+  id       String      @id @default(cuid())
+  name     String
+  location String
+  items    Equipment[]
+
+  @@map("equipment_sets")
+}
+
+model Equipment {
+  id           String          @id @default(cuid())
+  assetId      String          @unique @map("asset_id")
+  name         String
+  model        String
+  status       EquipmentStatus @default(USABLE)
+  location     String
+  purchaseDate DateTime        @map("purchase_date")
+  notes        String?
+  set          EquipmentSet?   @relation(fields: [setId], references: [id], onDelete: SetNull)
+  setId        String?         @map("set_id")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  @@map("equipment")
+}
+
+enum EquipmentStatus {
+  USABLE
+  BROKEN
+  LOST
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}

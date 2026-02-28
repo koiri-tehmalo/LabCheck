@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { StatusBadge } from "@/components/dashboard/status-badge";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState, useMemo } from "react";
-import type { EquipmentSet, EquipmentItem } from "@/lib/types";
+import type { EquipmentSet } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -21,19 +20,8 @@ import { SetForm } from "@/components/dashboard/set-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-
-
-const fromSnapshotToEquipmentItem = (snapshot: any): EquipmentItem => {
-    const data = snapshot.data();
-    return {
-        id: snapshot.id,
-        ...data,
-        purchaseDate: data.purchaseDate.toDate().toISOString(),
-    } as EquipmentItem;
-};
-
+import { getEquipmentSets } from '@/actions/set';
+import { hasPermission } from '@/lib/permissions';
 
 export default function SetsPage() {
   const [sets, setSets] = useState<EquipmentSet[]>([]);
@@ -42,34 +30,11 @@ export default function SetsPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
-
   const fetchSets = async () => {
     setLoading(true);
-    try {
-        const setsCollection = collection(db, "equipment_sets");
-        const setsSnapshot = await getDocs(setsCollection);
-        const setList = setsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as EquipmentSet[];
-
-        if (setList.length === 0) {
-            setSets([]);
-            setLoading(false);
-            return;
-        }
-
-        const allItemsSnapshot = await getDocs(collection(db, "equipment"));
-        const allItems = allItemsSnapshot.docs.map(fromSnapshotToEquipmentItem);
-
-        const setsWithItems = setList.map(set => ({
-            ...set,
-            items: allItems.filter(item => item.setId === set.id)
-        }));
-        setSets(setsWithItems);
-
-    } catch (error) {
-        console.error("Failed to fetch sets:", error);
-    } finally {
-        setLoading(false);
-    }
+    const data = await getEquipmentSets();
+    setSets(data);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -80,10 +45,10 @@ export default function SetsPage() {
 
   const handleSuccess = () => {
     setIsAddModalOpen(false);
-    fetchSets(); // Refresh data
+    fetchSets();
   };
   
-  const canManage = !!user;
+  const canManage = hasPermission(user?.role, 'MANAGE_SETS');
 
   const filteredSets = useMemo(() => {
     if (!searchTerm) return sets;
@@ -92,27 +57,26 @@ export default function SetsPage() {
     );
   }, [sets, searchTerm]);
 
-
   return (
     <div className="flex flex-col gap-4 md:gap-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Equipment Sets</h1>
-          <p className="text-muted-foreground">Manage groups of related equipment.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">ชุดครุภัณฑ์</h1>
+          <p className="text-muted-foreground">จัดการกลุ่มครุภัณฑ์ที่เกี่ยวข้องกัน</p>
         </div>
         {canManage && (
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-                <Button className="w-full md:w-auto">
+                <Button className="w-full md:w-auto btn-gradient border-0">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Set
+                สร้างชุดครุภัณฑ์
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[625px]">
+            <DialogContent className="sm:max-w-[625px] glass-elevated border-border/40">
                 <DialogHeader>
-                <DialogTitle>Create New Equipment Set</DialogTitle>
+                <DialogTitle>สร้างชุดครุภัณฑ์ใหม่</DialogTitle>
                 <DialogDescription>
-                    Fill out the form below to create a new equipment set.
+                    กรอกข้อมูลด้านล่างเพื่อสร้างชุดครุภัณฑ์ใหม่
                 </DialogDescription>
                 </DialogHeader>
                 <SetForm onSuccess={handleSuccess} />
@@ -125,8 +89,8 @@ export default function SetsPage() {
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search by set name..." 
-            className="pl-10" 
+            placeholder="ค้นหาด้วยชื่อชุดครุภัณฑ์..." 
+            className="pl-10 glass-input" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -151,19 +115,19 @@ export default function SetsPage() {
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredSets.map(set => (
-              <Card key={set.id}>
+              <Card key={set.id} className="glass-card border-border/40">
                 <CardHeader>
                   <CardTitle>{set.name}</CardTitle>
-                  <CardDescription>Location: {set.location}</CardDescription>
+                  <CardDescription>สถานที่: {set.location}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <h4 className="text-sm font-medium">Items in this set:</h4>
+                  <h4 className="text-sm font-medium">รายการในชุดนี้:</h4>
                   <Separator />
                    {set.items && set.items.length > 0 ? (
                     <ul className="space-y-3">
                       {set.items.map(item => (
                         <li key={item.id} className="flex justify-between items-center text-sm">
-                          <Link href={`/dashboard/equipment/${item.id}`} className="hover:underline">
+                          <Link href={`/dashboard/equipment/${item.id}`} className="hover:text-[hsl(230,80%,70%)] transition-colors">
                             {item.name}
                           </Link>
                           <StatusBadge status={item.status} />
@@ -171,17 +135,17 @@ export default function SetsPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">No items in this set.</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">ไม่มีรายการในชุดนี้</p>
                   )}
                 </CardContent>
               </Card>
             ))}
           </div>
           {filteredSets.length === 0 && !loading && (
-            <Card>
+            <Card className="glass-card border-border/40">
               <CardContent className="py-12 text-center">
-                <h3 className="text-lg font-medium text-muted-foreground">No Equipment Sets Found</h3>
-                <p className="text-sm text-muted-foreground mt-2">Create a new set or adjust your search term to get started.</p>
+                <h3 className="text-lg font-medium text-muted-foreground">ไม่พบชุดครุภัณฑ์</h3>
+                <p className="text-sm text-muted-foreground mt-2">สร้างชุดใหม่หรือปรับคำค้นหา</p>
               </CardContent>
             </Card>
           )}
